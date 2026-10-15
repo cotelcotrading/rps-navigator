@@ -1,0 +1,715 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>RPS Navigator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#022c22">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg"><script>window.__PWA=1</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<script src="vendor/chart.umd.js"></script>
+<script src="vendor/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#022c22; --bg2:#064e3b; --glass:rgba(255,255,255,.05); --glass2:rgba(255,255,255,.09);
+  --line:rgba(255,255,255,.12); --fg:#ecfdf5; --muted:#9dc2b4; --accent:#10b981; --accent2:#047857; --mint:#6ee7b7;
+  --warn:#fbbf24; --bad:#f87171; --good:#34d399; --shadow:0 10px 40px rgba(0,0,0,.35); --head:rgba(2,44,34,.75);
+  --field:rgba(0,0,0,.28); --proj:rgba(110,231,183,.06); --grid:rgba(255,255,255,.08); --btnfg:#022c22;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --bg:#ecfdf5; --bg2:#d1fae5; --glass:rgba(255,255,255,.62); --glass2:rgba(255,255,255,.85); --line:rgba(6,78,59,.16);
+  --fg:#052e22; --muted:#3f6b5c; --accent:#059669; --accent2:#047857; --mint:#047857; --warn:#b45309; --bad:#b91c1c; --good:#047857;
+  --shadow:0 10px 30px rgba(6,78,59,.14); --head:rgba(236,253,245,.8); --field:rgba(255,255,255,.8); --proj:rgba(5,150,105,.07);
+  --grid:rgba(6,78,59,.12); --btnfg:#ffffff; color-scheme:light;}}
+:root[data-theme="light"]{
+  --bg:#ecfdf5; --bg2:#d1fae5; --glass:rgba(255,255,255,.62); --glass2:rgba(255,255,255,.85); --line:rgba(6,78,59,.16);
+  --fg:#052e22; --muted:#3f6b5c; --accent:#059669; --accent2:#047857; --mint:#047857; --warn:#b45309; --bad:#b91c1c; --good:#047857;
+  --shadow:0 10px 30px rgba(6,78,59,.14); --head:rgba(236,253,245,.8); --field:rgba(255,255,255,.8); --proj:rgba(5,150,105,.07);
+  --grid:rgba(6,78,59,.12); --btnfg:#ffffff; color-scheme:light;}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Roboto,system-ui,sans-serif;font-size:14px;line-height:1.5;color:var(--fg);background:var(--bg);
+  background-image:radial-gradient(1200px 600px at 10% -10%,var(--bg2),transparent 60%),radial-gradient(900px 500px at 100% 10%,rgba(16,185,129,.18),transparent 60%);
+  background-attachment:fixed;min-height:100vh;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px;overflow-x:hidden}
+.wrap{max-width:1320px;margin:0 auto;position:relative;z-index:1}
+button,input,select{font:inherit;color:inherit}
+h1,h2,h3{margin:0;text-wrap:balance}
+.leaves{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.leaf{position:absolute;bottom:-60px;width:26px;height:26px;opacity:0;color:var(--mint);animation:rise linear infinite}
+@keyframes rise{0%{transform:translateY(0) rotate(0);opacity:0}10%{opacity:.28}90%{opacity:.18}100%{transform:translateY(-110vh) rotate(300deg) translateX(60px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.leaf{display:none}*{animation:none!important;transition:none!important}}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));
+  background:var(--head);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;max-width:1320px;margin:0 auto}
+.brand{display:flex;gap:12px;align-items:center;min-width:0;flex:1 1 320px}
+.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:grid;place-items:center;box-shadow:0 0 24px rgba(16,185,129,.45);flex:none;color:#ecfdf5}
+.brand h1{font-size:18px;font-weight:800;letter-spacing:-.01em}
+.brand p{margin:0;color:var(--muted);font-size:12px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:var(--glass2);cursor:pointer;font-weight:600;font-size:13px;transition:.2s;white-space:nowrap}
+.btn:hover{border-color:var(--mint);box-shadow:0 0 18px rgba(16,185,129,.28);transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(135deg,var(--accent2),var(--accent));border-color:transparent;color:#fff}
+.btn.sm{padding:6px 10px;font-size:12px;border-radius:9px}
+.btn:focus-visible,input:focus-visible,select:focus-visible,.tab:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+.glass{position:relative;background:var(--glass);border:1px solid var(--line);border-radius:20px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:var(--shadow);padding:18px;min-width:0;
+  animation:fade .5s ease both}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .25s;
+  background:radial-gradient(360px circle at var(--mx,50%) var(--my,0%),rgba(110,231,183,.14),transparent 60%)}
+.glass:hover::before{opacity:1}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.sec{margin-top:18px}
+.sec>h2{font-size:15px;font-weight:700;margin:0 0 4px;display:flex;gap:8px;align-items:center}
+.sec>.sub{color:var(--muted);font-size:12px;margin:0 0 12px}
+.tabs{display:flex;gap:6px;margin-top:18px;padding:5px;border-radius:16px;background:var(--glass);border:1px solid var(--line);width:max-content;max-width:100%;overflow-x:auto;backdrop-filter:blur(16px)}
+.tab{border:0;background:transparent;padding:9px 18px;border-radius:12px;cursor:pointer;font-weight:600;color:var(--muted);transition:.25s;white-space:nowrap}
+.tab[aria-selected=true]{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;box-shadow:0 4px 18px rgba(16,185,129,.4)}
+.pane{display:none}.pane.on{display:block;animation:fade .4s ease both}
+.drop{border:1.5px dashed var(--line);border-radius:18px;padding:16px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;transition:.2s}
+.drop.over{border-color:var(--mint);background:var(--glass2);box-shadow:0 0 28px rgba(16,185,129,.3)}
+.drop .t{flex:1 1 260px;min-width:0}.drop .t b{display:block}.drop .t span{color:var(--muted);font-size:12px}
+.issues{margin-top:12px;display:grid;gap:6px}
+.issue{display:flex;gap:8px;padding:8px 12px;border-radius:10px;font-size:12.5px;border:1px solid var(--line);background:var(--glass)}
+.issue.error{border-color:var(--bad);color:var(--bad)}.issue.warn{border-color:var(--warn);color:var(--warn)}.issue.ok{border-color:var(--good);color:var(--good)}
+.issue span{color:var(--fg)}
+.grid-kpi{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+@media(max-width:1100px){.grid-kpi{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.grid-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:440px){.grid-kpi{grid-template-columns:minmax(0,1fr)}}
+.kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:flex;gap:6px;align-items:center}
+.kpi .v{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.kpi .s{font-size:11.5px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(16,185,129,.7);animation:pulse 2s infinite;flex:none}
+.dot.bad{background:var(--bad)}.dot.warn{background:var(--warn)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.6)}70%{box-shadow:0 0 0 10px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+.pos{color:var(--good)}.neg{color:var(--bad)}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media(max-width:900px){.row2{grid-template-columns:minmax(0,1fr)}}
+.chartbox{position:relative;height:320px}
+.seg{display:flex;gap:4px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);background:transparent;padding:5px 11px;border-radius:999px;cursor:pointer;font-size:12px;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:transparent}
+.head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.head h3{font-size:14px;font-weight:700}
+.tw{overflow:auto;border-radius:12px;border:1px solid var(--line);max-width:100%}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:12.5px}
+th,td{padding:8px 11px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--grid)}
+th{background:var(--glass2);font-weight:600;color:var(--muted);position:sticky;top:0;z-index:2;font-size:11.5px}
+td:first-child,th:first-child{text-align:left;position:sticky;left:0;background:var(--bg);z-index:1}
+th:first-child{z-index:3;background:var(--bg2)}
+tr.proj td{background:var(--proj)}tr.proj td:first-child{background:var(--bg)}
+tr.sel td{outline:1px solid var(--mint);outline-offset:-1px}
+.grp th{text-align:center;color:var(--mint);border-bottom:1px solid var(--line)}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid}
+.pill.ok{color:var(--good);border-color:var(--good)}.pill.bad{color:var(--bad);border-color:var(--bad)}.pill.act{color:var(--mint);border-color:var(--mint)}.pill.pr{color:var(--warn);border-color:var(--warn)}
+.field{display:grid;gap:4px;font-size:12px;color:var(--muted)}
+.field input,.field select,.inp{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--fg);width:100%;min-width:0}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+input[type=range]{accent-color:var(--accent);width:100%}
+.status{display:inline-flex;gap:10px;align-items:center;padding:10px 18px;border-radius:14px;font-weight:800;letter-spacing:.04em;border:1px solid}
+.status.ok{color:var(--good);border-color:var(--good);background:rgba(16,185,129,.1)}.status.warn{color:var(--warn);border-color:var(--warn);background:rgba(251,191,36,.1)}.status.bad{color:var(--bad);border-color:var(--bad);background:rgba(248,113,113,.1)}
+.recs{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.recs li{padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--glass);display:flex;gap:10px}
+.recs li::before{content:"";width:6px;border-radius:3px;background:var(--accent);flex:none}
+.plan{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 12px;border:1px solid var(--line);border-radius:12px;margin-top:8px}
+.plan .d{flex:1 1 200px;min-width:0;font-size:12.5px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.formula{padding:10px 14px;border-radius:12px;background:var(--field);border:1px solid var(--line);margin:6px 0}
+.pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin-top:10px;color:var(--muted);font-size:12px}
+.chip{display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border-radius:999px;background:var(--glass2);border:1px solid var(--line);font-size:12px}
+.empty{color:var(--muted);text-align:center;padding:24px}
+footer{margin-top:30px;color:var(--muted);font-size:12px;text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;background:var(--head);backdrop-filter:blur(16px);border:1px solid var(--mint);padding:10px 16px;border-radius:12px;box-shadow:var(--shadow);max-width:90vw}
+</style>
+
+<div class="leaves" id="leaves" aria-hidden="true"></div>
+<header class="top"><div class="bar">
+  <div class="brand">
+    <div class="logo"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.6 5-7.3"/></svg></div>
+    <div style="min-width:0"><h1>RPS Navigator</h1><p>DOE Renewable Portfolio Standards Compliance Dashboard &amp; Computation Engine</p></div>
+  </div>
+  <button class="btn" id="btnTpl" title="Download the standard EC Monitoring template (v1.0)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16"/></svg>Standard EC Template</button>
+  <button class="btn primary" id="btnUp"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3m0 0-4 4m4-4 4 4M4 21h16"/></svg>Upload Excel</button>
+  <button class="btn" id="btnTheme" aria-label="Toggle light or dark theme"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+  <input type="file" id="file" accept=".xlsx,.xlsm,.xls" hidden>
+</div></header>
+
+<main class="wrap">
+  <section class="glass sec" style="margin-top:18px">
+    <div class="drop" id="drop">
+      <div class="t"><b id="ecName">Load your Monitoring workbook</b>
+        <span id="ecMeta">Drop the filled <i>REC Monitoring Template</i> (or an ANECO-style Monitoring sheet) here. Files are read in your browser only &mdash; nothing is uploaded to a server.</span></div>
+      <label class="field" style="min-width:190px">Study cases (demo data)
+        <select id="demo"><option value="">Select an EC&hellip;</option></select></label>
+      <button class="btn sm" id="btnClear" title="Remove the data saved in this browser">Clear saved data</button>
+    </div>
+    <div class="issues" id="issues" aria-live="polite"></div>
+  </section>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="t1" aria-selected="true" aria-controls="p1">Executive Dashboard &amp; Navigator</button>
+    <button class="tab" role="tab" id="t2" aria-selected="false" aria-controls="p2">Computation Engine &amp; Export</button>
+  </div>
+
+  <!-- TAB 1 -->
+  <div class="pane on" id="p1" role="tabpanel" aria-labelledby="t1">
+    <section class="glass sec">
+      <div class="head"><h3>Compliance period navigator</h3>
+        <span class="chip" id="selChip"></span></div>
+      <input type="range" id="yr" min="2020" max="2040" step="1" value="2025" aria-label="Compliance period year">
+      <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:11px"><span id="yMin">2020</span><span id="yPeriod"></span><span id="yMax">2040</span></div>
+    </section>
+
+    <div class="grid-kpi sec" id="kpis"></div>
+
+    <section class="sec"><div class="row2">
+      <div class="glass"><div class="head"><h3>Forecast series &mdash; actual vs. Holt projection</h3>
+        <div class="seg" id="serSeg"></div></div><div class="chartbox"><canvas id="cSeries"></canvas></div>
+        <div class="kpi"><div class="s" id="serNote"></div></div></div>
+      <div class="glass"><div class="head"><h3>REC supply vs. RPS obligation</h3></div><div class="chartbox"><canvas id="cSupply"></canvas></div>
+        <div class="kpi"><div class="s">Bars: RECs created by source. Lines: obligation and ending bank (RECs = MWh).</div></div></div>
+    </div></section>
+
+    <section class="glass sec">
+      <div class="head"><h3>REC account ledger</h3><span class="chip">Click a row to navigate</span></div>
+      <div class="tw" style="max-height:440px"><table id="ledger"></table></div>
+    </section>
+
+    <section class="sec"><div class="row2">
+      <div class="glass">
+        <div class="head"><h3>Price sensitivity &amp; what-if simulator</h3></div>
+        <div class="fgrid">
+          <label class="field">DOE maximum price (&#8369;/REC): <b id="pv" style="color:var(--fg)"></b>
+            <input type="range" id="price" min="0" max="500" step="0.5"></label>
+          <label class="field">Annual price escalation after <span id="escB"></span>: <b id="ev" style="color:var(--fg)"></b>
+            <input type="range" id="esc" min="0" max="10" step="0.5"></label>
+        </div>
+        <div id="whatKpis" class="fgrid" style="margin-top:14px"></div>
+        <div class="chartbox" style="height:230px;margin-top:12px"><canvas id="cSens"></canvas></div>
+      </div>
+      <div class="glass">
+        <div class="head"><h3>Planned RE contracts &amp; REM purchases</h3></div>
+        <div class="fgrid" id="planForm">
+          <label class="field">Type<select id="pType"><option value="ppa">RE-eligible PPA</option><option value="rem">REM / spot REC purchase</option></select></label>
+          <label class="field ppaf">Technology<select id="pTech"></select></label>
+          <label class="field ppaf">Capacity (MW)<input type="number" id="pMW" min="0" step="0.5" value="10"></label>
+          <label class="field ppaf">Capacity factor (%)<input type="number" id="pCF" min="1" max="100" step="1" value="45"></label>
+          <label class="field remf" hidden>RECs per year<input type="number" id="pRec" min="0" step="100" value="5000"></label>
+          <label class="field">From CP<input type="number" id="pFrom" step="1"></label>
+          <label class="field">To CP (blank = open)<input type="number" id="pTo" step="1"></label>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn primary sm" id="pAdd">Add to scenario</button>
+          <button class="btn sm" id="pSuggest">Suggest MW to close peak gap</button>
+          <button class="btn sm" id="pReset">Clear scenario</button>
+        </div>
+        <div id="plans"></div>
+        <div class="kpi"><div class="s" style="margin-top:10px">Contracted energy counts only up to MW &times; hours in the CP &times; 1,000 kWh. Scenario applies to projection years only.</div></div>
+      </div>
+    </div></section>
+
+    <section class="glass sec"><div class="head"><h3>Financial exposure</h3></div>
+      <div class="chartbox"><canvas id="cCost"></canvas></div>
+      <div class="kpi"><div class="s">Exposure = shortfall RECs &times; price (upper bound; excludes ERC/DOE penalties and any REC trading discount).</div></div></section>
+
+    <section class="glass sec" id="advice">
+      <div class="head"><h3>Compliance status &amp; recommendations</h3><span id="badge"></span></div>
+      <div id="adviceSum" style="color:var(--muted)"></div>
+      <ul class="recs" id="recs"></ul>
+    </section>
+  </div>
+
+  <!-- TAB 2 -->
+  <div class="pane" id="p2" role="tabpanel" aria-labelledby="t2">
+    <section class="glass sec">
+      <div class="head"><h3>Model parameters</h3><button class="btn sm" id="setReset">Reset to DOE defaults</button></div>
+      <div class="fgrid" id="params"></div>
+      <div class="formula mono" style="margin-top:14px">RPS<sub>n</sub> = ROUNDDOWN[ (ES + NM + RE-OU + GEOP)<sub>n&minus;1</sub> &times; (K<sub>o</sub> + K<sub>m</sub>)<sub>n</sub> ]</div>
+      <div class="formula mono">K<sub>m</sub>(n) = &Delta;<sub>pre</sub> &times; years from start to min(n, switch&minus;1) + &Delta;<sub>post</sub> &times; years from switch to n &nbsp;&nbsp;(n = CP year + 1)</div>
+      <div class="formula mono">TER = ROUNDDOWN(created RECs + carry-over) &nbsp;|&nbsp; Shortfall = MAX(0, RPS &minus; TER &minus; opening bank) &nbsp;|&nbsp; Cost = Shortfall &times; price</div>
+      <div class="formula mono">Holt: L<sub>t</sub> = &alpha;y<sub>t</sub> + (1&minus;&alpha;)(L<sub>t&minus;1</sub>+T<sub>t&minus;1</sub>), T<sub>t</sub> = &beta;(L<sub>t</sub>&minus;L<sub>t&minus;1</sub>) + (1&minus;&beta;)T<sub>t&minus;1</sub>, forecast = L + hT (floored at 0 for GEOP, NM, RE-OU, FIT)</div>
+    </section>
+    <section class="glass sec">
+      <div class="head"><h3>Full computation grid</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary sm" id="xXlsx">Export full computation (Excel)</button>
+          <button class="btn sm" id="xCsv">Export CSV</button></div></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:12px">
+        <label class="field" style="flex:1 1 200px">Search<input id="q" placeholder="Year, period or status&hellip;" class="inp"></label>
+        <label class="field">Basis<select id="fBasis"><option value="">All</option><option value="Actual">Actual</option><option value="Projection">Projection</option><option value="short">Shortfall only</option></select></label>
+        <label class="field">Rows<select id="pgSize"><option>8</option><option selected>12</option><option>25</option><option>50</option></select></label>
+      </div>
+      <div class="seg" id="colSeg" style="margin-bottom:12px"></div>
+      <div class="tw" style="max-height:560px"><table id="grid"></table></div>
+      <div class="pager"><span id="pgInfo"></span><button class="btn sm" id="pgPrev">Prev</button><button class="btn sm" id="pgNext">Next</button></div>
+    </section>
+  </div>
+
+  <footer>RPS Navigator &middot; computation mirrors the Monitoring_forecast workbooks (validated, 0 mismatches on the five study ECs). Estimates for planning; the DOE/ERC determination governs.</footer>
+</main>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+/* RPS REC engine: mirrors the Monitoring_forecast workbook logic */
+const RPS=(function(){
+const TECH=['hydro','solar','thermal','embedded','others'];
+const TECHNAME={hydro:'Hydro',solar:'Solar',thermal:'Geothermal / thermal',embedded:'Embedded RE',others:'Other RE'};
+const DEFAULTS={alpha:0.05,beta:0.05,ko:0.0334059761162786,kmStart:2020,incPre:0.01,incPost:0.0252,switchYear:2023,
+  price:241.56,esc:0,escBase:2025,opening:0,horizon:2040,carryPSA:true};
+function hoursInCP(y){const a=Date.UTC(y,11,26),b=Date.UTC(y+1,11,25);return ((b-a)/864e5+1)*24;}
+function fl(x){return Math.floor(x+1e-9);}
+function holt(y,a,b,t0){
+  const n=y.length; let L=y[0]; let T=(t0!==undefined&&t0!==null)?t0:(n>1?y[1]-y[0]:0);
+  const T0=T,fit=[null],lev=[L],tr=[T],errs=[];
+  for(let t=1;t<n;t++){const f=L+T;fit.push(f);if(y[t])errs.push(Math.abs((y[t]-f)/y[t]));
+    const Ln=a*y[t]+(1-a)*(L+T);T=b*(Ln-L)+(1-b)*T;L=Ln;lev.push(L);tr.push(T);}
+  return {L,T,T0,fit,lev,tr,mape:errs.length?errs.reduce((s,v)=>s+v,0)/errs.length:0};
+}
+function kmFor(n,s){let k=0;for(let y=s.kmStart;y<=n;y++)k+=(y>=s.switchYear?s.incPost:s.incPre);return k;}
+function compute(model){
+  const s=Object.assign({},DEFAULTS,model.settings||{});
+  const R=model.rows.slice().sort((a,b)=>a.year-b.year); const N=R.length;
+  if(N<3) return {error:'At least three compliance periods are needed to fit the forecast.'};
+  const last=R[N-1].year, hz=Math.max(s.horizon,last+1), H=hz-last;
+  const ges=R.map(r=>(r.net||0)+(r.geop||0)+(r.nm||0)+(r.reou||0));
+  const fitHist=R.map(r=>(r.fit!==undefined&&r.fit!==null&&r.fit!=='')?+r.fit:((r.net||0)*(r.fitPct||0)));
+  const fGES=holt(ges,s.alpha,s.beta);
+  const fGEOP=holt(R.map(r=>r.geop||0),s.alpha,s.beta), fNM=holt(R.map(r=>r.nm||0),s.alpha,s.beta), fOU=holt(R.map(r=>r.reou||0),s.alpha,s.beta);
+  const fFIT=holt(fitHist,s.alpha,s.beta,(fitHist[N-1]-fitHist[0])/(N-1));
+  const fc=(f,h)=>f.L+h*f.T;
+  const plans=model.plans||[];
+  const base=model.baseline||{}; // year -> {mw:[],kwh:[]}
+  const lastMW=TECH.map(t=>R[N-1].mw?R[N-1].mw[t]||0:0), lastKWH=TECH.map(t=>R[N-1].kwh?R[N-1].kwh[t]||0:0);
+  const out=[]; let COV=0,BB=s.opening;
+  for(let i=0;i<N+H;i++){
+    const hist=i<N, year=hist?R[i].year:last+(i-N+1), h=i-N+1, hrs=hoursInCP(year);
+    const g=hist?ges[i]:Math.max(0,fc(fGES,h));
+    const km=kmFor(year+1,s), pct=s.ko+km;
+    const obl=fl(pct*g);
+    const geop=hist?(R[i].geop||0):Math.max(0,fc(fGEOP,h)), nm=hist?(R[i].nm||0):Math.max(0,fc(fNM,h)), ou=hist?(R[i].reou||0):Math.max(0,fc(fOU,h));
+    const fit=hist?fitHist[i]:Math.max(0,fc(fFIT,h));
+    // PSA (RE eligible)
+    let mw,kwh;
+    if(hist){mw=TECH.map(t=>(R[i].mw||{})[t]||0);kwh=TECH.map(t=>(R[i].kwh||{})[t]||0);}
+    else if(base[year]){mw=base[year].mw.slice();kwh=base[year].kwh.slice();}
+    else if(s.carryPSA){mw=lastMW.slice();kwh=lastKWH.slice();}
+    else {mw=[0,0,0,0,0];kwh=[0,0,0,0,0];}
+    let remPlan=0;
+    if(!hist) for(const p of plans){
+      if(p.type==='rem'){ if(year>=p.from&&(!p.to||year<=p.to)) remPlan+=p.recs||0; continue;}
+      if(year>=p.from&&(!p.to||year<=p.to)){const k=TECH.indexOf(p.tech); if(k>=0){mw[k]+=p.mw; kwh[k]+=p.mw*hrs*1000*(p.cf/100);}}
+    }
+    const cap=mw.map(m=>m*hrs*1000), counted=kwh.map((v,k)=>Math.min(v,cap[k]));
+    const psa=counted.reduce((a,b)=>a+b,0)/1000, over=kwh.reduce((a,b)=>a+b,0)-counted.reduce((a,b)=>a+b,0);
+    const ownRE=geop+nm+ou; const rem=hist?(R[i].rem||0):remPlan, sold=hist?(R[i].sold||0):0;
+    const created=ownRE+psa+fit+rem, cin=COV, ter=fl(created+cin); COV=created+cin-ter;
+    const bb=BB, ret=Math.min(obl,ter+bb), eb=Math.max(0,bb+ter-sold-ret), sh=Math.max(0,obl-ter-bb);
+    BB=eb;
+    const price=s.price*Math.pow(1+s.esc,Math.max(0,year-s.escBase)), cost=sh*price;
+    out.push({year,hist,ges:g,km,pct,obl,geop,nm,ou,ownRE,psa,fit,rem,sold,created,ter,bb,ret,eb,sh,met:obl?ret/obl:1,
+      surplus:ter+bb-obl,status:sh>0?'Deficit':'Compliant',price,cost,costKwh:g?cost/(g*1000):0,bankValue:eb*price,soldValue:sold*price,
+      psaOver:over,mw:mw.slice(),hours:hrs,net:hist?R[i].net:null});
+  }
+  let cum=0; out.forEach(r=>{cum+=r.cost;r.cum=cum;});
+  const fut=out.filter(r=>!r.hist);
+  const firstShort=(out.find(r=>r.sh>0)||{}).year||null;
+  const firstShortFuture=(fut.find(r=>r.sh>0)||{}).year||null;
+  const bankPeak=out.reduce((m,r)=>r.eb>m.v?{v:r.eb,y:r.year}:m,{v:0,y:null});
+  return {settings:s,rows:out,N,last,hz,ges:fGES,geopF:fGEOP,nmF:fNM,ouF:fOU,fitF:fFIT,hist:{ges,fit:fitHist,years:R.map(r=>r.year)},
+    summary:{firstShort,firstShortFuture,bankPeak,cumFuture:fut.reduce((a,r)=>a+r.cost,0),cumShortFuture:fut.reduce((a,r)=>a+r.sh,0)}};
+}
+return {TECH,TECHNAME,DEFAULTS,hoursInCP,holt,kmFor,compute};
+})();
+
+
+</script>
+<script>
+const SAMPLE={"COTELCO":{"rows":[{"year":2020,"net":205760.64,"geop":0,"nm":0,"reou":0,"fitPct":0.0488753737155404,"fit":8931,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2021,"net":221641.41,"geop":0,"nm":0,"reou":0,"fitPct":0.0375840732183314,"fit":11836,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2022,"net":238947.0048,"geop":0,"nm":0,"reou":0,"fitPct":0.0361021979338219,"fit":15150,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2023,"net":248206.95409,"geop":0,"nm":0,"reou":0,"fitPct":0.0356732518903226,"fit":21937,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2024,"net":265608.220717,"geop":0,"nm":0,"reou":0,"fitPct":0.0324795114934985,"fit":6141,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2025,"net":300256.9376,"geop":0,"nm":0,"reou":0,"fitPct":0.0402179401021754,"fit":12408,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}}],"opening":0,"baseline":{"2026":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2027":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2028":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2029":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2030":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2031":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2032":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2033":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2034":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2035":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2036":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2037":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2038":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2039":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2040":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]}}},"ANECO":{"rows":[{"year":2020,"net":360848.6289732,"geop":0,"nm":27.1601605454545,"reou":0,"fitPct":0.0488753737155404,"fit":17636.6115958055,"rem":0,"sold":0,"mw":{"hydro":8,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":31933825.92,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2021,"net":392054.419986,"geop":0,"nm":162.47225,"reou":0,"fitPct":0.0375840732183314,"fit":14735.0020263243,"rem":0,"sold":0,"mw":{"hydro":33,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":48684672,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2022,"net":408548.6561325,"geop":0,"nm":200.11993,"reou":0,"fitPct":0.0361021979338219,"fit":14749.5044492925,"rem":0,"sold":0,"mw":{"hydro":33,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":48814212,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2023,"net":424928.656233367,"geop":0,"nm":342.831,"reou":0,"fitPct":0.0356732518903226,"fit":15158.5869892292,"rem":0,"sold":0,"mw":{"hydro":33,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":122289600,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2024,"net":482171.573821,"geop":0,"nm":488.417,"reou":0,"fitPct":0.0324795114934985,"fit":15660.6971737574,"rem":0,"sold":0,"mw":{"hydro":33,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":136573840.783939,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2025,"net":498273.907913,"geop":979.82311,"nm":326.9728,"reou":0,"fitPct":0.0402179401021754,"fit":20039.5501829219,"rem":0,"sold":298624,"mw":{"hydro":33,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":180775496.482116,"solar":0,"thermal":0,"embedded":0,"others":0}}],"opening":50083,"baseline":{"2026":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]},"2027":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]},"2028":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]},"2029":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]},"2030":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]},"2031":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]},"2032":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]},"2033":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]},"2034":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]},"2035":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]},"2036":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]},"2037":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]},"2038":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]},"2039":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]},"2040":{"mw":[33,0,0,0,0],"kwh":[115451520.082279,0,0,0,0]}}},"MORESCO-II":{"rows":[{"year":2020,"net":129457.660337776,"geop":0,"nm":0,"reou":0,"fitPct":0.0488753737155404,"fit":5110,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2021,"net":145819.64313,"geop":0,"nm":0,"reou":0,"fitPct":0.0375840732183314,"fit":6913,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2022,"net":152745.962829971,"geop":0,"nm":0,"reou":0,"fitPct":0.0361021979338219,"fit":9245,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2023,"net":167305.746021029,"geop":0,"nm":0,"reou":0,"fitPct":0.0356732518903226,"fit":13534,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2024,"net":174237.359067402,"geop":0,"nm":0,"reou":0,"fitPct":0.0324795114934985,"fit":19040,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2025,"net":180510.8414,"geop":0,"nm":0,"reou":0,"fitPct":0.0402179401021754,"fit":25092,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}}],"opening":0,"baseline":{"2026":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2027":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2028":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2029":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2030":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2031":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2032":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2033":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2034":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2035":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2036":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2037":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2038":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2039":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2040":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]}}},"MOELCI-II":{"rows":[{"year":2020,"net":149335.557996,"geop":0,"nm":0,"reou":0,"fitPct":0.0488753737155404,"fit":7298.83120607326,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2021,"net":154034.7804,"geop":0,"nm":0,"reou":0,"fitPct":0.0375840732183314,"fit":5789.2544647232,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2022,"net":158836.4209,"geop":0,"nm":0,"reou":0,"fitPct":0.0361021979338219,"fit":5734.34390643165,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2023,"net":160893.839,"geop":0,"nm":19.637,"reou":0,"fitPct":0.0356732518903226,"fit":5739.60644624801,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2024,"net":177513,"geop":0,"nm":42.183,"reou":0,"fitPct":0.0324795114934985,"fit":5765.5355237454,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2025,"net":192830.962108,"geop":0,"nm":59.4836666666667,"reou":0,"fitPct":0.0402179401021754,"fit":7755.2640839044,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}}],"opening":0,"baseline":{"2026":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2027":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2028":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2029":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2030":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2031":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2032":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2033":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2034":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2035":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2036":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2037":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2038":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2039":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2040":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]}}},"DORECO":{"rows":[{"year":2020,"net":139911,"geop":0,"nm":0,"reou":0,"fitPct":0.0488753737155404,"fit":6838.20241191497,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2021,"net":158139.436,"geop":0,"nm":0,"reou":0,"fitPct":0.0375840732183314,"fit":5943.52414132963,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2022,"net":163558.743,"geop":0,"nm":0,"reou":0,"fitPct":0.0361021979338219,"fit":5904.83011359311,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2023,"net":168394,"geop":0,"nm":0,"reou":0,"fitPct":0.0356732518903226,"fit":6007.16157881899,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2024,"net":181399,"geop":0,"nm":0.4,"reou":0,"fitPct":0.0324795114934985,"fit":5891.75090540913,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}},{"year":2025,"net":199557.716,"geop":0,"nm":5.9,"reou":0,"fitPct":0.0402179401021754,"fit":8025.80026901493,"rem":0,"sold":0,"mw":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0},"kwh":{"hydro":0,"solar":0,"thermal":0,"embedded":0,"others":0}}],"opening":0,"baseline":{"2026":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2027":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2028":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2029":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2030":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2031":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2032":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2033":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2034":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2035":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2036":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2037":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2038":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2039":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]},"2040":{"mw":[0,0,0,0,0],"kwh":[0,0,0,0,0]}}}};
+const TPL_B64="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";
+</script>
+<script>
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const D=RPS.DEFAULTS, TECH=RPS.TECH, TN=RPS.TECHNAME;
+const nf0=new Intl.NumberFormat('en-US',{maximumFractionDigits:0}), nf2=new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const n0=v=>(v==null||v===''||isNaN(v))?'–':nf0.format(v), n2=v=>(v==null||isNaN(v))?'–':nf2.format(v);
+const pc=(v,d=2)=>(v==null||isNaN(v))?'–':(v*100).toFixed(d)+'%';
+const php=v=>'₱'+(Math.abs(v)>=1e9?(v/1e9).toFixed(2)+' B':Math.abs(v)>=1e6?(v/1e6).toFixed(2)+' M':nf0.format(v));
+const phpF=v=>'₱'+nf0.format(v);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,3800);}
+
+/* ---------- state ---------- */
+const S={name:'',source:'',model:null,settings:{},plans:[],res:null,sel:2025,series:'ges',cols:{ges:1,par:1,sup:1,inv:1,fin:1},page:0,saved:{}};
+const EMPTY={rows:[],opening:0,baseline:null};
+function cfg(){return Object.assign({},D,S.settings);}
+function compute(){
+  const m=S.model; if(!m){S.res=null;return;}
+  const plans=S.plans.filter(p=>p.on);
+  S.res=RPS.compute({rows:m.rows,settings:Object.assign({opening:m.opening||0},S.settings),baseline:m.baseline||null,plans});
+}
+
+/* ---------- parsing ---------- */
+const COL={net:'C',geop:'D',nm:'E',reou:'F'};
+function colIdx(a){let n=0;for(const ch of a)n=n*26+ch.charCodeAt(0)-64;return n-1;}
+function parseWorkbook(buf){
+  const issues=[]; const E=m=>issues.push({level:'error',msg:m}), W=m=>issues.push({level:'warn',msg:m});
+  let wb; try{wb=XLSX.read(buf,{type:'array'});}catch(e){E('The file could not be read as an Excel workbook ('+e.message+').');return {issues};}
+  let name=wb.SheetNames.find(n=>/^monitoring$/i.test(n.trim()))||wb.SheetNames.find(n=>/monitor/i.test(n));
+  if(!name){E('No "Monitoring" sheet found. Sheets in this file: '+wb.SheetNames.join(', ')+'.');return {issues};}
+  const ws=wb.Sheets[name];
+  const cell=(a)=>{const c=ws[a];return c?c.v:undefined;};
+  const num=(a)=>{const v=cell(a);if(v===undefined||v===null||v==='')return null;const x=typeof v==='number'?v:parseFloat(String(v).replace(/,/g,''));return isNaN(x)?NaN:x;};
+  const ver=cell('AL2');
+  if(ver===undefined) W('No template version cell (AL2) – treated as a legacy Monitoring sheet. Columns are read by position (A–AJ).');
+  else if(String(ver)!=='1.0') W('Template version "'+ver+'" differs from the supported v1.0; results may be incomplete.');
+  // header sanity
+  const h3=String(cell('C3')||'')+String(cell('G3')||'');
+  if(!/net/i.test(h3)||!/GES/i.test(h3)) W('Header cells C3/G3 do not look like the Monitoring template; check that columns were not moved.');
+  const range=XLSX.utils.decode_range(ws['!ref']||'A1:A1');
+  const rows=[]; let prevYear=null;
+  const lastRow=(String(ver)==='1.0')?19:Math.min(range.e.r+1,60);
+  for(let r=5;r<=lastRow;r++){
+    const net=num(COL.net+r);
+    const yRaw=num('B'+r);
+    const anyIn=['C','D','E','F'].some(c=>num(c+r)!==null);
+    if(!anyIn){ if(rows.length) break; else continue; }
+    if(Number.isNaN(net)){E('Row '+r+': Net Electricity Sales is not a number.');continue;}
+    let year=(yRaw!==null&&!Number.isNaN(yRaw))?yRaw:(prevYear!==null?prevYear+1:null);
+    if(year===null){E('Row '+r+': Year (column B) is missing.');continue;}
+    if(prevYear!==null&&year!==prevYear+1) E('Row '+r+': Year '+year+' does not follow '+prevYear+' – periods must be consecutive.');
+    prevYear=year;
+    const o={year,net:net,geop:0,nm:0,reou:0,mw:{},kwh:{}};
+    if(net===null){E('Row '+r+' (CP '+year+'): Net Electricity Sales is blank.');o.net=0;}
+    for(const [k,c] of [['geop','D'],['nm','E'],['reou','F']]){const v=num(c+r);if(Number.isNaN(v)){E('Row '+r+': column '+c+' is not a number.');}else o[k]=v||0;}
+    ['O','P','Q','R','S'].forEach((c,i)=>{const v=num(c+r);o.mw[TECH[i]]=(v&&!Number.isNaN(v))?v:0;});
+    ['W','X','Y','Z','AA'].forEach((c,i)=>{const v=num(c+r);o.kwh[TECH[i]]=(v&&!Number.isNaN(v))?v:0;});
+    const fp=num('AG'+r), fr=num('AH'+r);
+    o.fitPct=(fp&&!Number.isNaN(fp))?fp:0;
+    if(fr!==null&&!Number.isNaN(fr)) o.fit=fr;
+    if(o.fit===undefined&&!o.fitPct) W('CP '+year+': neither FIT % nor FIT RECs supplied – FIT treated as 0.');
+    if(o.fitPct>0.3) W('CP '+year+': FIT % looks like a whole number ('+o.fitPct+'); expected a fraction such as 0.0402.');
+    o.rem=Math.max(0,num('AI'+r)||0); o.sold=Math.max(0,num('AJ'+r)||0);
+    for(const k of ['net','geop','nm','reou']) if(o[k]<0) E('CP '+year+': '+k.toUpperCase()+' is negative.');
+    TECH.forEach(t=>{ if(o.mw[t]<0||o.kwh[t]<0) E('CP '+year+': negative PSA value ('+TN[t]+').');
+      if(o.kwh[t]>0&&o.mw[t]===0) W('CP '+year+': '+TN[t]+' delivered kWh entered but contracted MW is 0 – energy will not count as eligible.');
+      const cap=o.mw[t]*RPS.hoursInCP(year)*1000; if(o.kwh[t]>cap*1.0001&&cap>0) W('CP '+year+': '+TN[t]+' delivery exceeds MW × hours; the excess is not counted.');});
+    rows.push(o);
+  }
+  if(rows.length<3) E('At least three consecutive compliance periods are needed (found '+rows.length+').');
+  const st={}; const p=(a)=>num(a);
+  const pk=[['ko','D23'],['incPre','D24'],['incPost','D25'],['kmStart','D26'],['switchYear','D27']];
+  for(const [k,a] of pk){const v=p(a);if(v!==null&&!Number.isNaN(v)&&v>0)st[k]=v;}
+  const opening=num('S1');
+  let ec=cell('J1'); if(!ec){const t=String(cell('B1')||''); const m=t.split(/[—-]\s*/).pop(); ec=(/ compliance|monitoring/i.test(t)&&m&&m!==t)?m.trim():null;}
+  const op=(opening&&!Number.isNaN(opening))?opening:0;
+  if(!op) issues.push({level:'warn',msg:'Opening REC balance (cell S1) is empty – assumed 0. You can set it under Computation Engine → Model parameters.'});
+  return {issues,model:{rows,opening:op,baseline:null},settings:st,name:ec||'Uploaded EC',sheet:name,errors:issues.some(i=>i.level==='error')};
+}
+function showIssues(list,okMsg){
+  const el=$('#issues'); el.innerHTML='';
+  if(!list.length&&okMsg) list=[{level:'ok',msg:okMsg}];
+  list.slice(0,14).forEach(i=>{const d=document.createElement('div');d.className='issue '+i.level;d.innerHTML='<b>'+({error:'Error',warn:'Check',ok:'OK'}[i.level])+'</b><span>'+esc(i.msg)+'</span>';el.appendChild(d);});
+  if(list.length>14){const d=document.createElement('div');d.className='issue warn';d.innerHTML='<span>…and '+(list.length-14)+' more.</span>';el.appendChild(d);}
+}
+function handleFile(f){
+  if(!f) return;
+  if(!/\.(xlsx|xlsm|xls)$/i.test(f.name)){showIssues([{level:'error',msg:'"'+f.name+'" is not an Excel file. Use the Monitoring template (.xlsx).'}]);return;}
+  if(f.size>8*1048576){showIssues([{level:'error',msg:'File is larger than 8 MB – the Monitoring template is normally under 100 KB.'}]);return;}
+  const rd=new FileReader();
+  rd.onerror=()=>showIssues([{level:'error',msg:'The file could not be read.'}]);
+  rd.onload=()=>{
+    const r=parseWorkbook(rd.result);
+    if(r.errors||!r.model){showIssues(r.issues);toast('Upload not loaded – fix the errors listed.');return;}
+    loadModel(r.name,'Uploaded: '+f.name,r.model,r.settings);
+    showIssues(r.issues,'Loaded '+r.model.rows.length+' actual compliance periods from "'+f.name+'" – sheet '+r.sheet+'.');
+    persist(); toast('Loaded '+r.name);
+  };
+  rd.readAsArrayBuffer(f);
+}
+function loadModel(name,source,model,settings){
+  S.name=name;S.source=source;S.model=model;S.settings=Object.assign({},settings||{});S.plans=[];
+  const last=model.rows[model.rows.length-1].year; S.sel=last;
+  S.page=0; $('#price').value=cfg().price; refresh(true);
+}
+function persist(){try{ if(S.source.startsWith('Uploaded')) localStorage.setItem('ecorps.v1',JSON.stringify({name:S.name,source:S.source,model:S.model,settings:S.settings})); }catch(e){}}
+function restore(){try{const j=localStorage.getItem('ecorps.v1');if(!j)return false;const d=JSON.parse(j);if(!d||!d.model||!d.model.rows||d.model.rows.length<3)return false;loadModel(d.name,d.source,d.model,d.settings);showIssues([{level:'ok',msg:'Restored your last upload from this browser ('+d.source+'). Use "Clear saved data" to remove it.'}]);return true;}catch(e){return false;}}
+
+/* ---------- downloads ---------- */
+async function saveFile(filename,data,mime){
+  try{
+    if(window.claude&&claude.use){const dl=await claude.use('downloads'); if(dl){await dl.save({filename,data}); toast('Saved '+filename); return;}}
+  }catch(e){ if(e&&e.code==='declined') return; }
+  const blob=new Blob([data],{type:mime||'application/octet-stream'}); const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+}
+function b64u8(b){const s=atob(b),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;}
+
+/* ---------- theme / charts ---------- */
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+const charts={};
+function mk(id,cfgc){ if(charts[id]){charts[id].destroy();} const ctx=$('#'+id); charts[id]=new Chart(ctx,cfgc); return charts[id]; }
+function chartBase(){
+  const fg=css('--muted'), gr=css('--grid');
+  return {responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:fg,boxWidth:12,usePointStyle:true}},tooltip:{backgroundColor:css('--head')||'#022c22',borderColor:css('--line'),borderWidth:1,titleColor:css('--fg'),bodyColor:css('--fg'),
+      callbacks:{label:c=>' '+c.dataset.label+': '+nf0.format(c.parsed.y)}}},
+    scales:{x:{ticks:{color:fg,maxRotation:0,autoSkip:true},grid:{color:gr}},y:{ticks:{color:fg,callback:v=>Math.abs(v)>=1e6?(v/1e6)+'M':Math.abs(v)>=1e3?(v/1e3)+'k':v},grid:{color:gr}}}};
+}
+const SER={ges:{k:'ges',l:'Gross electricity sales (MWh)'},geop:{k:'geop',l:'GEOP sales (MWh)'},nm:{k:'nm',l:'Net-metering (MWh)'},ou:{k:'ou',l:'RE own use (MWh)'},fit:{k:'fit',l:'FIT RECs'}};
+function drawSeries(){
+  const R=S.res.rows, s=SER[S.series], base=chartBase(); const lab=R.map(r=>r.year);
+  const act=R.map(r=>r.hist?r[s.k]:null), li=R.findLastIndex(r=>r.hist);
+  const prj=R.map((r,i)=>(!r.hist||i===li)?r[s.k]:null);
+  base.plugins.tooltip.callbacks.label=c=>c.parsed.y==null?'':' '+c.dataset.label+': '+nf0.format(c.parsed.y);
+  mk('cSeries',{type:'line',data:{labels:lab,datasets:[
+    {label:'Actual',data:act,borderColor:css('--mint'),backgroundColor:css('--mint'),pointRadius:4,tension:.25,borderWidth:2.5},
+    {label:'Holt projection',data:prj,borderColor:css('--accent'),borderDash:[7,5],pointRadius:2,tension:.25,borderWidth:2.5},
+    {label:'Selected CP',data:R.map(r=>r.year===S.sel?r[s.k]:null),borderColor:css('--warn'),backgroundColor:css('--warn'),pointRadius:8,pointStyle:'rectRot',showLine:false}]},
+    options:Object.assign(base,{scales:Object.assign(base.scales,{y:Object.assign(base.scales.y,{title:{display:true,text:s.l,color:css('--muted')}}),x:Object.assign(base.scales.x,{title:{display:true,text:'Compliance period (start year)',color:css('--muted')}})})})});
+  const f={ges:S.res.ges,geop:S.res.geopF,nm:S.res.nmF,ou:S.res.ouF,fit:S.res.fitF}[S.series];
+  $('#serNote').textContent='Holt level '+n0(f.L)+', trend '+n2(f.T)+' per year, in-sample MAPE '+(f.mape*100).toFixed(1)+'% (α='+cfg().alpha+', β='+cfg().beta+').';
+}
+function drawSupply(){
+  const R=S.res.rows, base=chartBase(), lab=R.map(r=>r.year);
+  mk('cSupply',{data:{labels:lab,datasets:[
+    {type:'bar',label:'GEOP + NM + own use',data:R.map(r=>Math.floor(r.ownRE)),backgroundColor:css('--accent2'),stack:'s'},
+    {type:'bar',label:'RE-eligible PSA',data:R.map(r=>Math.floor(r.psa)),backgroundColor:css('--accent'),stack:'s'},
+    {type:'bar',label:'FIT',data:R.map(r=>Math.floor(r.fit)),backgroundColor:css('--mint'),stack:'s'},
+    {type:'bar',label:'REM purchases',data:R.map(r=>Math.floor(r.rem)),backgroundColor:css('--warn'),stack:'s'},
+    {type:'line',label:'RPS obligation',data:R.map(r=>r.obl),borderColor:css('--bad'),backgroundColor:css('--bad'),pointRadius:3,tension:.2,borderWidth:2.5},
+    {type:'line',label:'Ending REC bank',data:R.map(r=>r.eb),borderColor:css('--fg'),borderDash:[4,4],pointRadius:0,tension:.2,borderWidth:2}]},
+    options:Object.assign(base,{scales:Object.assign(base.scales,{x:Object.assign(base.scales.x,{stacked:true}),y:Object.assign(base.scales.y,{stacked:true})})})});
+}
+function exposure(price){
+  const c=cfg(); return S.res.rows.filter(r=>!r.hist).reduce((a,r)=>a+r.sh*price*Math.pow(1+c.esc,Math.max(0,r.year-c.escBase)),0);
+}
+function drawCost(){
+  const R=S.res.rows, base=chartBase();
+  mk('cCost',{data:{labels:R.map(r=>r.year),datasets:[
+    {type:'bar',label:'Annual exposure (₱)',data:R.map(r=>r.cost),backgroundColor:R.map(r=>r.hist?css('--accent2'):css('--bad')),yAxisID:'y'},
+    {type:'line',label:'Cumulative (₱)',data:R.map(r=>r.cum),borderColor:css('--warn'),backgroundColor:css('--warn'),pointRadius:2,tension:.2,yAxisID:'y1'}]},
+    options:Object.assign(base,{scales:{x:base.scales.x,y:Object.assign(base.scales.y,{title:{display:true,text:'Annual ₱',color:css('--muted')},ticks:Object.assign({},base.scales.y.ticks,{callback:v=>'₱'+(v>=1e6?(v/1e6)+'M':v>=1e3?(v/1e3)+'k':v)})}),
+      y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'Cumulative ₱',color:css('--muted')},ticks:{color:css('--muted'),callback:v=>'₱'+(v>=1e9?(v/1e9)+'B':v>=1e6?(v/1e6)+'M':v)}}}})});
+}
+function drawSens(){
+  const c=cfg(), base=chartBase(), xs=[],ys=[]; for(let p=0;p<=500;p+=25){xs.push(p);ys.push(exposure(p));}
+  base.scales.x.title={display:true,text:'REC price (₱/REC)',color:css('--muted')};
+  base.plugins.tooltip.callbacks.label=ctx=>' Projection-years exposure: '+phpF(ctx.parsed.y);
+  base.scales.y.ticks.callback=v=>'₱'+(v>=1e9?(v/1e9)+'B':v>=1e6?(v/1e6)+'M':v);
+  mk('cSens',{type:'line',data:{labels:xs,datasets:[{label:'Exposure',data:ys,borderColor:css('--mint'),backgroundColor:'rgba(16,185,129,.18)',fill:true,pointRadius:0,tension:.1,borderWidth:2.5},
+    {label:'Current price',data:xs.map(x=>Math.abs(x-c.price)<12.5?exposure(c.price):null),showLine:false,pointRadius:7,borderColor:css('--warn'),backgroundColor:css('--warn')}]},options:base});
+}
+
+/* ---------- views ---------- */
+function rowSel(){return S.res.rows.find(r=>r.year===S.sel)||S.res.rows[0];}
+function pill(r){return r.sh>0?'<span class="pill bad">Shortfall</span>':'<span class="pill ok">Compliant</span>';}
+function basis(r){return r.hist?'<span class="pill act">Actual</span>':'<span class="pill pr">Projection</span>';}
+function renderKpis(){
+  const R=S.res.rows, r=rowSel(), c=cfg(), upto=R.filter(x=>x.year<=r.year);
+  const pos=r.ter+r.bb-r.sold-r.obl, cumO=upto.reduce((a,x)=>a+x.obl,0), cumT=upto.reduce((a,x)=>a+x.ter,0);
+  const dot=r.sh>0?'bad':'';
+  const K=[
+   ['Gross electricity sales (GES)',n0(r.ges)+' <small style="font-size:13px">MWh</small>','CP '+r.year+' · N−1 base for '+(r.year+1)+' · '+(r.hist?'actual':'Holt projection'),''],
+   ['RPS obligation',n0(r.obl)+' <small style="font-size:13px">RECs</small>','K₀+Kₘ = '+pc(r.pct)+' · cumulative '+n0(cumO),''],
+   ['Eligible RECs (TER)',n0(r.ter)+' <small style="font-size:13px">RECs</small>','Own RE '+n0(r.ownRE)+' · PSA '+n0(r.psa)+' · FIT '+n0(r.fit)+' · REM '+n0(r.rem),''],
+   ['Net compliance position',(pos>=0?'+':'−')+n0(Math.abs(pos))+' <small style="font-size:13px">RECs</small>',pos>=0?'Surplus · ending bank '+n0(r.eb):'Shortfall of '+n0(r.sh)+' RECs after bank '+n0(r.bb),pos>=0?'pos':'neg'],
+   ['Estimated financial exposure',phpF(r.cost),'At ₱'+n2(r.price)+'/REC · '+(r.cost?'₱'+r.costKwh.toFixed(4)+'/kWh sold':'no shortfall'),r.cost>0?'neg':'pos']];
+  $('#kpis').innerHTML=K.map((k,i)=>'<div class="glass kpi"><div class="l">'+(i===3?'<span class="dot '+dot+'"></span>':'')+k[0]+'</div><div class="v '+k[3]+'">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>').join('');
+  $('#selChip').innerHTML='CP '+r.year+' &middot; '+(r.hist?'Actual':'Projection')+' &middot; Dec 26, '+r.year+' – Dec 25, '+(r.year+1);
+  $('#yPeriod').textContent='CP '+r.year;
+}
+function renderLedger(){
+  const R=S.res.rows;
+  $('#ledger').innerHTML='<thead><tr><th>Compliance period</th><th>Basis</th><th>Obligation</th><th>TER</th><th>Opening bank</th><th>Shortfall</th><th>Ending bank</th><th>RECs sold</th><th>Net position</th><th>Status</th></tr></thead><tbody>'+
+   R.map(r=>{const p=r.ter+r.bb-r.sold-r.obl;return '<tr data-y="'+r.year+'" class="'+(r.hist?'':'proj')+(r.year===S.sel?' sel':'')+'" style="cursor:pointer"><td>Dec 26, '+r.year+' – Dec 25, '+(r.year+1)+'</td><td>'+basis(r)+'</td><td>'+n0(r.obl)+'</td><td>'+n0(r.ter)+'</td><td>'+n0(r.bb)+'</td><td class="'+(r.sh>0?'neg':'')+'">'+n0(r.sh)+'</td><td>'+n0(r.eb)+'</td><td>'+n0(r.sold)+'</td><td class="'+(p<0?'neg':'pos')+'">'+(p<0?'−':'+')+n0(Math.abs(p))+'</td><td>'+pill(r)+'</td></tr>';}).join('')+'</tbody>';
+  $$('#ledger tbody tr').forEach(tr=>tr.onclick=()=>{S.sel=+tr.dataset.y;$('#yr').value=S.sel;renderSel();});
+}
+function renderWhat(){
+  const c=cfg(), R=S.res.rows, fut=R.filter(r=>!r.hist), r=rowSel();
+  const tot=fut.reduce((a,x)=>a+x.cost,0), shs=fut.reduce((a,x)=>a+x.sh,0);
+  const items=[['Selected CP exposure',phpF(r.cost)],['Selected CP ₱/kWh sold',r.costKwh.toFixed(4)],['Projection-years exposure',php(tot)],['Shortfall RECs (projection)',n0(shs)]];
+  $('#whatKpis').innerHTML=items.map(i=>'<div class="chip" style="border-radius:14px;display:block;padding:10px 12px"><div style="color:var(--muted);font-size:11px">'+i[0]+'</div><b style="font-size:16px">'+i[1]+'</b></div>').join('');
+  $('#pv').textContent='₱'+n2(c.price)+(Math.abs(c.price-D.price)<.01?' (DOE cap)':'');
+  $('#ev').textContent=(c.esc*100).toFixed(1)+'%'; $('#escB').textContent=c.escBase;
+}
+function renderPlans(){
+  $('#plans').innerHTML=S.plans.length?S.plans.map((p,i)=>'<div class="plan"><input type="checkbox" '+(p.on?'checked':'')+' data-i="'+i+'" aria-label="Enable"><div class="d"><b>'+(p.type==='rem'?'REM purchase':'PPA – '+TN[p.tech])+'</b> &middot; '+(p.type==='rem'?n0(p.recs)+' RECs/yr':p.mw+' MW @ '+p.cf+'% CF ≈ '+n0(p.mw*8760*p.cf/100)+' RECs/yr')+' &middot; CP '+p.from+'–'+(p.to||'open')+'</div><button class="btn sm" data-d="'+i+'">Remove</button></div>').join(''):'<div class="empty">No scenario items yet. Add a PPA or REM purchase to test how the shortfall responds.</div>';
+  $$('#plans input').forEach(e=>e.onchange=()=>{S.plans[+e.dataset.i].on=e.checked;refresh();});
+  $$('#plans button').forEach(b=>b.onclick=()=>{S.plans.splice(+b.dataset.d,1);refresh();});
+}
+function renderAdvice(){
+  const R=S.res.rows, fut=R.filter(r=>!r.hist), c=cfg(), sm=S.res.summary;
+  const actualShort=R.filter(r=>r.hist&&r.sh>0), last=S.res.last;
+  const first=R.find(r=>r.sh>0), near=fut.slice(0,3).some(r=>r.sh>0);
+  let cls,txt;
+  if(!first){cls='ok';txt='COMPLIANT & SECURED';}
+  else if(actualShort.length||near){cls='bad';txt='SHORTFALL RISK';}
+  else {cls='warn';txt='DEFICIT WARNING';}
+  $('#badge').innerHTML='<span class="status '+cls+'"><span class="dot '+(cls==='ok'?'':cls)+'"></span>'+txt+'</span>';
+  const peak=R.reduce((m,r)=>r.sh>m.sh?r:m,{sh:0,year:null});
+  const sum=!first?'No shortfall through CP '+S.res.hz+' under the current assumptions; peak ending bank '+n0(sm.bankPeak.v)+' RECs in CP '+sm.bankPeak.y+'.'
+    :'First shortfall in CP '+first.year+' ('+n0(first.sh)+' RECs); largest in CP '+peak.year+' ('+n0(peak.sh)+' RECs). Projection-years exposure '+php(sm.cumFuture)+' at ₱'+n2(c.price)+'/REC.';
+  $('#adviceSum').textContent=sum;
+  const L=[];
+  if(first){
+    const cf=0.45, mw=Math.ceil(peak.sh/(peak.hours*cf));
+    L.push('<b>Accelerate RE-eligible PSA contracting.</b> Closing the CP '+peak.year+' gap of '+n0(peak.sh)+' RECs needs about '+mw+' MW of hydro-type supply at 45% capacity factor (solar at 20% needs about '+Math.ceil(peak.sh/(peak.hours*.2))+' MW), contracted from CP '+first.year+'. Use the scenario builder to test it.');
+    const rem=fut.filter(r=>r.sh>0).slice(0,3);
+    L.push('<b>Time REM purchases as a bridge.</b> Shortfalls of '+rem.map(r=>n0(r.sh)).join(', ')+' RECs in the first projected deficit years cost '+php(rem.reduce((a,r)=>a+r.cost,0))+' at the cap; buying below the DOE maximum price lowers this one-for-one. Hedge early before the obligation step-ups.');
+  } else L.push('<b>Hold the position and monitor.</b> Re-run this model after each CP closes; the obligation rises every year as Kₘ accumulates ('+pc(R[0].pct)+' to '+pc(R[R.length-1].pct)+').');
+  const nmShare=fut.length?fut[fut.length-1].nm/Math.max(1,fut[fut.length-1].ges):0;
+  const lastA=R.filter(r=>r.hist).pop();
+  L.push('<b>Optimise net-metering and own-use crediting.</b> In CP '+lastA.year+' these sources created '+n0(lastA.ownRE)+' RECs ('+(lastA.obl?(lastA.ownRE/lastA.obl*100).toFixed(1):0)+'% of that year\'s obligation). Register eligible net-metered and own-use generation so every MWh is certificated.');
+  const bankEnd=fut.find(r=>r.eb===0&&R[R.indexOf(r)-1]&&R[R.indexOf(r)-1].eb>0);
+  if(sm.bankPeak.v>0) L.push('<b>Bank surplus RECs deliberately.</b> Peak bank is '+n0(sm.bankPeak.v)+' RECs (CP '+sm.bankPeak.y+')'+(bankEnd?' and it is exhausted by CP '+bankEnd.year:'')+'. RECs are valid for three years from issuance (this model does not track expiry), so confirm vintages and sell or retire the oldest first.');
+  const over=R.filter(r=>r.psaOver>1).pop();
+  if(over) L.push('<b>Renegotiate PSA capacity terms.</b> In CP '+over.year+' delivered energy exceeded MW × hours by '+n0(over.psaOver/1000)+' MWh, which earns no REC; align contracted MW with actual deliveries.');
+  if(first&&fut.length&&first.year>last+1) L.push('<b>Plan the Board calendar.</b> The first shortfall is '+(first.year-last)+' years after the last actual CP – enough lead time for a competitive procurement.');
+  $('#recs').innerHTML=L.map(x=>'<li><div>'+x+'</div></li>').join('');
+}
+/* grid */
+const G=[
+ {g:'ges',k:'lab',l:'Compliance period',f:r=>'Dec 26, '+r.year+' – Dec 25, '+(r.year+1),x:r=>'Dec 26, '+r.year+' - Dec 25, '+(r.year+1)},
+ {g:'ges',k:'year',l:'Year',f:r=>r.year,x:r=>r.year},
+ {g:'ges',k:'basis',l:'Basis',f:r=>basis(r),x:r=>r.hist?'Actual':'Projection'},
+ {g:'ges',k:'netp',l:'Net sales (MWh)',f:r=>n2(netOf(r)),x:r=>netOf(r)},
+ {g:'ges',k:'geop',l:'GEOP (MWh)',f:r=>n2(r.geop),x:r=>r.geop},
+ {g:'ges',k:'nm',l:'Net-metering (MWh)',f:r=>n2(r.nm),x:r=>r.nm},
+ {g:'ges',k:'ou',l:'RE own use (MWh)',f:r=>n2(r.ou),x:r=>r.ou},
+ {g:'ges',k:'ges',l:'GES total (MWh)',f:r=>n2(r.ges),x:r=>r.ges},
+ {g:'par',k:'ko',l:'Kₒ',f:r=>pc(S.res.settings.ko,4),x:r=>S.res.settings.ko},
+ {g:'par',k:'km',l:'Kₘ (cumulative)',f:r=>pc(r.km,2),x:r=>r.km},
+ {g:'par',k:'pct',l:'Kₒ + Kₘ',f:r=>pc(r.pct,4),x:r=>r.pct},
+ {g:'par',k:'obl',l:'RPS obligation (RECs)',f:r=>n0(r.obl),x:r=>r.obl},
+ {g:'sup',k:'own',l:'GEOP+NM+OU RECs',f:r=>n0(r.ownRE),x:r=>r.ownRE},
+ {g:'sup',k:'psa',l:'RE-eligible PSA RECs',f:r=>n2(r.psa),x:r=>r.psa},
+ {g:'sup',k:'psaov',l:'PSA excess kWh (not counted)',f:r=>n0(r.psaOver),x:r=>r.psaOver},
+ {g:'sup',k:'fit',l:'FIT RECs',f:r=>n0(r.fit),x:r=>r.fit},
+ {g:'sup',k:'rem',l:'REM RECs',f:r=>n0(r.rem),x:r=>r.rem},
+ {g:'sup',k:'cre',l:'Created RECs',f:r=>n2(r.created),x:r=>r.created},
+ {g:'inv',k:'ter',l:'TER (ROUNDDOWN)',f:r=>n0(r.ter),x:r=>r.ter},
+ {g:'inv',k:'bb',l:'Opening bank',f:r=>n0(r.bb),x:r=>r.bb},
+ {g:'inv',k:'sold',l:'RECs sold',f:r=>n0(r.sold),x:r=>r.sold},
+ {g:'inv',k:'ret',l:'Retired for compliance',f:r=>n0(r.ret),x:r=>r.ret},
+ {g:'inv',k:'sh',l:'Shortfall',f:r=>'<span class="'+(r.sh>0?'neg':'')+'">'+n0(r.sh)+'</span>',x:r=>r.sh},
+ {g:'inv',k:'eb',l:'Ending bank',f:r=>n0(r.eb),x:r=>r.eb},
+ {g:'inv',k:'met',l:'Obligation met',f:r=>pc(r.met,1),x:r=>r.met},
+ {g:'inv',k:'pos',l:'Net position',f:r=>n0(r.ter+r.bb-r.sold-r.obl),x:r=>r.ter+r.bb-r.sold-r.obl},
+ {g:'inv',k:'st',l:'Status',f:r=>pill(r),x:r=>r.status},
+ {g:'fin',k:'price',l:'Price (₱/REC)',f:r=>n2(r.price),x:r=>r.price},
+ {g:'fin',k:'cost',l:'Exposure (₱)',f:r=>n0(r.cost),x:r=>r.cost},
+ {g:'fin',k:'ckwh',l:'₱ per kWh sold',f:r=>r.costKwh.toFixed(5),x:r=>r.costKwh},
+ {g:'fin',k:'cum',l:'Cumulative (₱)',f:r=>n0(r.cum),x:r=>r.cum},
+ {g:'fin',k:'bv',l:'Bank value (₱)',f:r=>n0(r.bankValue),x:r=>r.bankValue}];
+const GN={ges:'Sales & GES',par:'Parameters',sup:'REC supply',inv:'Inventory & compliance',fin:'Financial'};
+function netOf(r){return r.net!=null?r.net:Math.max(0,r.ges-r.geop-r.nm-r.ou);}
+function gridRows(){
+  const q=$('#q').value.trim().toLowerCase(), b=$('#fBasis').value;
+  return S.res.rows.filter(r=>{
+    if(b==='Actual'&&!r.hist)return false; if(b==='Projection'&&r.hist)return false; if(b==='short'&&r.sh<=0)return false;
+    if(!q)return true; return (r.year+' dec 26, '+r.year+' – dec 25, '+(r.year+1)+' '+(r.hist?'actual':'projection')+' '+r.status).toLowerCase().includes(q);});
+}
+function renderGrid(){
+  const cols=G.filter(c=>S.cols[c.g]), rows=gridRows(), ps=+$('#pgSize').value, pages=Math.max(1,Math.ceil(rows.length/ps));
+  S.page=Math.min(S.page,pages-1); const sl=rows.slice(S.page*ps,S.page*ps+ps);
+  const groups=[]; cols.forEach(c=>{const l=groups[groups.length-1]; if(l&&l.g===c.g)l.n++; else groups.push({g:c.g,n:1});});
+  $('#grid').innerHTML='<thead><tr class="grp">'+groups.map(g=>'<th colspan="'+g.n+'">'+GN[g.g]+'</th>').join('')+'</tr><tr>'+cols.map(c=>'<th>'+c.l+'</th>').join('')+'</tr></thead><tbody>'+
+    (sl.length?sl.map(r=>'<tr class="'+(r.hist?'':'proj')+'">'+cols.map(c=>'<td>'+c.f(r)+'</td>').join('')+'</tr>').join(''):'<tr><td colspan="'+cols.length+'" class="empty">No rows match.</td></tr>')+'</tbody>';
+  $('#pgInfo').textContent=rows.length?('Rows '+(S.page*ps+1)+'–'+Math.min(rows.length,S.page*ps+ps)+' of '+rows.length+' · page '+(S.page+1)+'/'+pages):'0 rows';
+  $('#pgPrev').disabled=S.page===0; $('#pgNext').disabled=S.page>=pages-1;
+}
+function renderCols(){
+  $('#colSeg').innerHTML=Object.keys(GN).map(k=>'<button aria-pressed="'+!!S.cols[k]+'" data-k="'+k+'">'+GN[k]+'</button>').join('');
+  $$('#colSeg button').forEach(b=>b.onclick=()=>{S.cols[b.dataset.k]=S.cols[b.dataset.k]?0:1;renderCols();renderGrid();});
+}
+const PARAMS=[['ko','Kₒ (base share)','0.0000000001',v=>v],['incPre','Δ before switch','0.0001'],['incPost','Δ from switch year','0.0001'],['switchYear','Switch year','1'],['kmStart','Kₘ start year','1'],['alpha','Holt α','0.01'],['beta','Holt β','0.01'],['price','Price cap (₱/REC)','0.01'],['esc','Price escalation (fraction/yr)','0.001'],['opening','Opening REC bank','1'],['horizon','Horizon CP','1']];
+function renderParams(){
+  const c=cfg(); const m=S.model;
+  $('#params').innerHTML=PARAMS.map(p=>'<label class="field">'+p[1]+'<input type="number" data-p="'+p[0]+'" step="'+p[2]+'" value="'+(p[0]==='opening'?(S.settings.opening!=null?S.settings.opening:(m?m.opening:0)):c[p[0]])+'"></label>').join('')+
+   '<label class="field">Forecast PSA<select data-p="carryPSA"><option value="1" '+(c.carryPSA?'selected':'')+'>Contracted level continues</option><option value="0" '+(!c.carryPSA?'selected':'')+'>Stops after last actual</option></select></label>';
+  $$('#params [data-p]').forEach(e=>e.onchange=()=>{const k=e.dataset.p; let v=e.tagName==='SELECT'?e.value==='1':parseFloat(e.value);
+    if(typeof v==='number'&&isNaN(v))return; if(k==='horizon'){v=Math.min(2060,Math.max(S.res.last+1,v));} if(['alpha','beta'].includes(k)&&(v<=0||v>1)){toast('α and β must be between 0 and 1');renderParams();return;}
+    S.settings[k]=v; if(k==='price')$('#price').value=v; refresh();});
+}
+/* ---------- refresh ---------- */
+function refresh(full){
+  if(!S.model){return;}
+  compute(); if(S.res.error){showIssues([{level:'error',msg:S.res.error}]);return;}
+  const R=S.res.rows; const yr=$('#yr'); yr.min=R[0].year; yr.max=R[R.length-1].year; $('#yMin').textContent=yr.min; $('#yMax').textContent=yr.max;
+  if(S.sel<+yr.min||S.sel>+yr.max)S.sel=S.res.last; yr.value=S.sel;
+  $('#ecName').textContent=S.name; $('#ecMeta').textContent=S.source+' · '+S.res.N+' actual CPs ('+R[0].year+'–'+S.res.last+') · projection to CP '+S.res.hz;
+  $('#price').value=cfg().price; $('#esc').value=cfg().esc*100;
+  const f=$('#pFrom'); if(full||!f.value) f.value=S.res.last+1;
+  $('#pSuggest').disabled=false;
+  renderKpis();renderLedger();renderWhat();renderPlans();renderAdvice();renderParams();renderGrid();drawSeries();drawSupply();drawCost();drawSens();
+}
+function renderSel(){ if(!S.res)return; renderKpis(); renderLedger(); renderWhat(); drawSeries(); }
+/* ---------- exports ---------- */
+function buildWorkbook(){
+  const wb=XLSX.utils.book_new(), m=S.model, c=cfg();
+  const head2=['Compliance Period','Year','Net Electricity Sales','GEOP','Net-Metering','RE Own Use','GES TOTAL','Ko','Km','Ko+Km','REC Total Obligation','','','','Hydro MW','Solar MW','Thermal MW','Embedded MW','Others MW','','','','Hydro kWh','Solar kWh','Thermal kWh','Embedded kWh','Others kWh','','','','','','FIT %','FIT RECs','REM RECs','RECs Sold'];
+  const aoa=[['RENEWABLE ENERGY COMPLIANCE MONITORING — '+S.name+'  (RPS Navigator export; template v1.0 column layout A–AJ; values, not formulas)'],[],head2];
+  const R=S.res.rows.filter(r=>r.hist);
+  m.rows.forEach((o,i)=>{const r=R[i];aoa.push(['Dec 26, '+o.year+' - Dec 25, '+(o.year+1),o.year,o.net,o.geop,o.nm,o.reou,r.ges,S.res.settings.ko,r.km,r.pct,r.obl,'','','',...TECH.map(t=>o.mw[t]||0),'','','',...TECH.map(t=>o.kwh[t]||0),'','','','','',o.fitPct||'',o.fit!=null?o.fit:r.fit,o.rem||0,o.sold||0]);});
+  wb.SheetNames.push('Monitoring'); wb.Sheets['Monitoring']=XLSX.utils.aoa_to_sheet(aoa);
+  const gc=G.filter(g=>g.k!=='lab'||true), comp=[gc.map(g=>g.l.replace(/\s+/g,' ')),...S.res.rows.map(r=>gc.map(g=>g.x(r)))];
+  wb.SheetNames.push('Computation'); wb.Sheets['Computation']=XLSX.utils.aoa_to_sheet(comp);
+  const pr=[['Parameter','Value'],['Cooperative',S.name],['Source',S.source],['Ko',S.res.settings.ko],['Delta before switch',c.incPre],['Delta from switch year',c.incPost],['Switch year',c.switchYear],['Km start year',c.kmStart],['Holt alpha',c.alpha],['Holt beta',c.beta],['Price (PHP/REC)',c.price],['Escalation (fraction/yr)',c.esc],['Escalation base year',c.escBase],['Opening REC bank',m.opening||0],['Rounding','ROUNDDOWN'],['Forecast PSA',c.carryPSA?'Contracted level continues':'Stops after last actual'],['Exported',new Date().toISOString()]];
+  S.plans.forEach((p,i)=>pr.push(['Scenario '+(i+1)+(p.on?'':' (off)'),p.type==='rem'?'REM '+p.recs+' RECs/yr CP '+p.from+'-'+(p.to||'open'):'PPA '+TN[p.tech]+' '+p.mw+' MW @ '+p.cf+'% CP '+p.from+'-'+(p.to||'open')]));
+  wb.SheetNames.push('Parameters'); wb.Sheets['Parameters']=XLSX.utils.aoa_to_sheet(pr);
+  return wb;
+}
+const fname=()=> (S.name||'EC').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40);
+function exportXlsx(){ if(!S.res)return toast('Load data first.'); const out=XLSX.write(buildWorkbook(),{type:'array',bookType:'xlsx'}); saveFile('RPS_Computation_'+fname()+'.xlsx',new Uint8Array(out),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); }
+function exportCsv(){ if(!S.res)return toast('Load data first.'); saveFile('RPS_Computation_'+fname()+'.csv',XLSX.utils.sheet_to_csv(buildWorkbook().Sheets['Computation']),'text/csv'); }
+
+/* ---------- events ---------- */
+function init(){
+  // leaves
+  const lv=$('#leaves'); for(let i=0;i<12;i++){const d=document.createElement('div');d.className='leaf';d.style.left=(i*8.5+Math.random()*5)+'%';d.style.animationDuration=(18+Math.random()*16)+'s';d.style.animationDelay=(-Math.random()*30)+'s';
+    d.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/></svg>';lv.appendChild(d);}
+  document.addEventListener('pointermove',e=>{const g=e.target.closest&&e.target.closest('.glass');if(g){const b=g.getBoundingClientRect();g.style.setProperty('--mx',(e.clientX-b.left)+'px');g.style.setProperty('--my',(e.clientY-b.top)+'px');}});
+  // tabs
+  $$('.tab').forEach(t=>t.onclick=()=>{$$('.tab').forEach(x=>x.setAttribute('aria-selected',x===t));$$('.pane').forEach(p=>p.classList.toggle('on',p.id===t.getAttribute('aria-controls')));if(S.res)refresh();});
+  // theme
+  $('#btnTheme').onclick=()=>{const d=document.documentElement,cur=d.dataset.theme||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');d.dataset.theme=cur==='dark'?'light':'dark';try{localStorage.setItem('ecorps.theme',d.dataset.theme);}catch(e){} if(S.res)refresh();};
+  let th='dark';try{th=localStorage.getItem('ecorps.theme')||'dark';}catch(e){}document.documentElement.dataset.theme=th;
+  matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{if(S.res)refresh();});
+  // upload
+  $('#btnUp').onclick=()=>$('#file').click(); $('#file').onchange=e=>{handleFile(e.target.files[0]);e.target.value='';};
+  const dr=$('#drop'); ['dragenter','dragover'].forEach(ev=>dr.addEventListener(ev,e=>{e.preventDefault();dr.classList.add('over');}));
+  ['dragleave','drop'].forEach(ev=>dr.addEventListener(ev,e=>{e.preventDefault();dr.classList.remove('over');}));
+  dr.addEventListener('drop',e=>handleFile(e.dataTransfer.files[0]));
+  $('#btnTpl').onclick=()=>saveFile('REC_Monitoring_Template_v1.0.xlsx',b64u8(TPL_B64),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  $('#btnClear').onclick=()=>{try{localStorage.removeItem('ecorps.v1');}catch(e){} toast('Saved data removed from this browser.');};
+  // demo
+  const dm=$('#demo'); Object.keys(SAMPLE).forEach(k=>{const o=document.createElement('option');o.value=k;o.textContent=k;dm.appendChild(o);});
+  dm.onchange=()=>{const k=dm.value;if(!k)return;const d=SAMPLE[k];loadModel(k,'Study case (demo data): '+k,{rows:d.rows,opening:d.opening||0,baseline:d.baseline},{});showIssues([{level:'ok',msg:'Loaded the study data for '+k+'. Forecast PSA follows the contracted level in the study workbook.'}]);};
+  // controls
+  $('#yr').oninput=e=>{S.sel=+e.target.value;renderSel();};
+  $('#price').oninput=e=>{S.settings.price=+e.target.value;refresh();};
+  $('#esc').oninput=e=>{S.settings.esc=+e.target.value/100;refresh();};
+  $('#serSeg').innerHTML=Object.keys(SER).map(k=>'<button data-k="'+k+'" aria-pressed="'+(k===S.series)+'">'+SER[k].l.split(' (')[0]+'</button>').join('');
+  $$('#serSeg button').forEach(b=>b.onclick=()=>{S.series=b.dataset.k;$$('#serSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));if(S.res)drawSeries();});
+  $('#pTech').innerHTML=TECH.map(t=>'<option value="'+t+'">'+TN[t]+'</option>').join('');
+  $('#pType').onchange=e=>{const rem=e.target.value==='rem';$$('.ppaf').forEach(x=>x.hidden=rem);$$('.remf').forEach(x=>x.hidden=!rem);};
+  $('#pAdd').onclick=()=>{ if(!S.res)return toast('Load data first.');
+    const type=$('#pType').value, from=parseInt($('#pFrom').value), to=$('#pTo').value?parseInt($('#pTo').value):null;
+    if(!from||from<=S.res.last){return toast('Scenario items start after the last actual CP ('+(S.res.last+1)+' or later).');}
+    if(to&&to<from)return toast('"To CP" must not be earlier than "From CP".');
+    if(type==='rem'){const recs=parseFloat($('#pRec').value);if(!(recs>0))return toast('Enter RECs per year.');S.plans.push({type,recs,from,to,on:true});}
+    else{const mw=parseFloat($('#pMW').value),cf=parseFloat($('#pCF').value);if(!(mw>0)||!(cf>0&&cf<=100))return toast('Enter MW and a capacity factor between 1 and 100.');S.plans.push({type,tech:$('#pTech').value,mw,cf,from,to,on:true});}
+    refresh();};
+  $('#pReset').onclick=()=>{S.plans=[];refresh();};
+  $('#pSuggest').onclick=()=>{ if(!S.res)return; const R=S.res.rows,peak=R.reduce((m,r)=>r.sh>m.sh?r:m,{sh:0}),first=R.find(r=>r.sh>0&&!r.hist);
+    if(!first)return toast('No projected shortfall – nothing to close.'); const cf=parseFloat($('#pCF').value)||45;
+    $('#pType').value='ppa';$('#pType').onchange({target:$('#pType')});$('#pMW').value=Math.ceil(peak.sh/(peak.hours*cf/100)); $('#pFrom').value=first.year; $('#pTo').value='';
+    toast('Sized for the CP '+peak.year+' gap at '+cf+'% CF. Review and click Add.');};
+  $('#setReset').onclick=()=>{S.settings={};refresh();};
+  $('#q').oninput=()=>{S.page=0;renderGrid();}; $('#fBasis').onchange=()=>{S.page=0;renderGrid();}; $('#pgSize').onchange=()=>{S.page=0;renderGrid();};
+  $('#pgPrev').onclick=()=>{S.page--;renderGrid();}; $('#pgNext').onclick=()=>{S.page++;renderGrid();};
+  $('#xXlsx').onclick=exportXlsx; $('#xCsv').onclick=exportCsv;
+  renderCols();
+  if(!restore()){ $('#demo').value='ANECO'; $('#demo').onchange(); showIssues([{level:'ok',msg:'Showing the ANECO study case. Upload your filled Monitoring template to analyse your own cooperative.'}]); }
+  if('serviceWorker' in navigator && location.protocol.startsWith('http') && window.__PWA){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+}
+let __i=0;const go=()=>{if(__i++)return;init();};document.addEventListener('DOMContentLoaded',go);if(document.readyState!=='loading')go();
+</script>
+</body></html>
