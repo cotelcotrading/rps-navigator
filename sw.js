@@ -1,5 +1,5 @@
-const V='rps-compliance-model-v2';
-const A=['./','./index.html','./manifest.webmanifest','./icon.svg','./vendor/chart.umd.js','./vendor/jszip.min.js'];
+const V='rps-compliance-model-v3';
+const A=['./','./index.html','./manifest.webmanifest','./icon.svg','./bg.jpg','./vendor/chart.umd.js','./vendor/jszip.min.js'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(V).then(c=>c.addAll(A)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;

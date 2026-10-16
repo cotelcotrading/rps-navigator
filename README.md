@@ -8,10 +8,10 @@ Static, client-side PWA: no backend. Uploaded workbooks are processed in the bro
 - `vendor/` – Chart.js 4.4.1 and JSZip 3.10.1 (bundled; works offline except the optional Inter font)
 - `manifest.webmanifest`, `icon.svg`, `sw.js` – PWA install + offline cache
 - `render.yaml` – Render static-site blueprint
-- optional `bg.jpg` – page background image (shown subtly if present; add it to the repo root)
+- `bg.jpg` – page background image (subtle)
 
 ## Deploy on Render
 Push this folder to the repo root (`cotelcotrading/rps-navigator`). Render redeploys automatically (Static Site, Publish Directory `.`).
 
 ## Updating
-Bump `const V='rps-compliance-model-v2'` in `sw.js` so installed copies refresh.
+Bump `const V='rps-compliance-model-v3'` in `sw.js` so installed copies refresh.
