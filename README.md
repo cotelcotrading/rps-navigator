@@ -14,4 +14,4 @@ Static, client-side PWA: no backend. Uploaded workbooks are processed in the bro
 Push this folder to the repo root (`cotelcotrading/rps-navigator`). Render redeploys automatically (Static Site, Publish Directory `.`).
 
 ## Updating
-Bump `const V='rps-compliance-model-v3'` in `sw.js` so installed copies refresh.
+Bump `const V='rps-compliance-model-v4'` in `sw.js` so installed copies refresh.

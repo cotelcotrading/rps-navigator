@@ -13,16 +13,16 @@
   --line:rgba(255,255,255,.14); --hi:rgba(255,255,255,.28); --fg:#ecfdf5; --muted:#9fc6b8; --accent:#10b981; --accent2:#047857; --mint:#6ee7b7;
   --warn:#fbbf24; --bad:#f87171; --good:#34d399; --obl:#bae6fd; --gray:#94a3b8;
   --shadow:0 18px 50px rgba(0,0,0,.38); --head:rgba(2,31,25,.62); --field:rgba(0,0,0,.30); --proj:rgba(110,231,183,.07); --grid:rgba(255,255,255,.09);
-  --bgimg-op:.16; color-scheme:dark;
+  --bgimg-op:.34; color-scheme:dark;
 }
 @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
   --bg:#e8f8f0; --bg2:#c9f1de; --glass:rgba(255,255,255,.55); --glass2:rgba(255,255,255,.78); --glass3:rgba(255,255,255,.92); --line:rgba(6,78,59,.16); --hi:rgba(255,255,255,.95);
   --fg:#052e22; --muted:#3d6b5b; --accent:#059669; --accent2:#047857; --mint:#047857; --warn:#b45309; --bad:#b91c1c; --good:#047857; --obl:#0c4a6e; --gray:#64748b;
-  --shadow:0 14px 40px rgba(6,78,59,.16); --head:rgba(232,248,240,.7); --field:rgba(255,255,255,.8); --proj:rgba(5,150,105,.08); --grid:rgba(6,78,59,.12); --bgimg-op:.2; color-scheme:light;}}
+  --shadow:0 14px 40px rgba(6,78,59,.16); --head:rgba(232,248,240,.7); --field:rgba(255,255,255,.8); --proj:rgba(5,150,105,.08); --grid:rgba(6,78,59,.12); --bgimg-op:.36; color-scheme:light;}}
 :root[data-theme="light"]{
   --bg:#e8f8f0; --bg2:#c9f1de; --glass:rgba(255,255,255,.55); --glass2:rgba(255,255,255,.78); --glass3:rgba(255,255,255,.92); --line:rgba(6,78,59,.16); --hi:rgba(255,255,255,.95);
   --fg:#052e22; --muted:#3d6b5b; --accent:#059669; --accent2:#047857; --mint:#047857; --warn:#b45309; --bad:#b91c1c; --good:#047857; --obl:#0c4a6e; --gray:#64748b;
-  --shadow:0 14px 40px rgba(6,78,59,.16); --head:rgba(232,248,240,.7); --field:rgba(255,255,255,.8); --proj:rgba(5,150,105,.08); --grid:rgba(6,78,59,.12); --bgimg-op:.2; color-scheme:light;}
+  --shadow:0 14px 40px rgba(6,78,59,.16); --head:rgba(232,248,240,.7); --field:rgba(255,255,255,.8); --proj:rgba(5,150,105,.08); --grid:rgba(6,78,59,.12); --bgimg-op:.36; color-scheme:light;}
 *{box-sizing:border-box}
 body{margin:0;font-family:Inter,Roboto,system-ui,sans-serif;font-size:14px;line-height:1.5;color:var(--fg);background:var(--bg);min-height:100vh;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 56px;overflow-x:hidden}
@@ -955,9 +955,10 @@ function init(){
   // background image slot (optional bg.jpg next to index.html)
   try{const im=new Image();im.onload=()=>{document.documentElement.style.setProperty('--bgimg','url("'+im.src+'")');document.body.classList.add('hasbg');};im.src=BG_DATA||'bg.jpg';}catch(e){}
   $('#studySeg').innerHTML=Object.keys(STUDY).map(k=>'<button data-k="'+k+'" aria-pressed="false">'+k+'</button>').join('');
-  $$('#studySeg button').forEach(b=>b.onclick=async()=>{const ec=JSON.parse(JSON.stringify(STUDY[b.dataset.k]));ec.file='Study case · Monitoring_forecast_'+b.dataset.k.replace('-','_');ec.study=true;
-    await loadEC(ec);showIssues([{level:'ok',msg:'Study case '+ec.name+' loaded (CP 2020–2025 actual data from the research workbook). Upload your own file at any time to replace it.'}]);});
-  restore();
+  const loadStudy=async(k,auto)=>{const ec=JSON.parse(JSON.stringify(STUDY[k]));ec.file='Study case · Monitoring_forecast_'+k.replace('-','_');ec.study=true;
+    await loadEC(ec);showIssues([{level:'ok',msg:(auto?'Showing the study case ':'Study case ')+ec.name+' (CP 2020–2025 actual data from the research workbook). Select another study case or upload your own file to replace it.'}]);};
+  $$('#studySeg button').forEach(b=>b.onclick=()=>loadStudy(b.dataset.k));
+  restore().then(ok=>{if(!ok)loadStudy('ANECO',true);});
   if('serviceWorker' in navigator&&location.protocol.startsWith('http')&&window.__PWA){navigator.serviceWorker.register('sw.js').catch(()=>{});}
   setTimeout(positionInd,50);
 }
