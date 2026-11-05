@@ -132,6 +132,24 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .shtbl td.fm{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--muted);text-align:left}
 footer{margin-top:34px;color:var(--muted);font-size:12px;text-align:center}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--head);backdrop-filter:blur(20px);border:1px solid var(--mint);padding:10px 16px;border-radius:13px;box-shadow:var(--shadow);max-width:90vw}
+
+.intro{padding:20px 22px;margin-top:20px}
+.intro h2{font-size:19px;letter-spacing:-.01em;margin-bottom:6px}
+.intro p{color:var(--muted);max-width:90ch;line-height:1.55}
+.intro p b{color:var(--fg)}
+.ig{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px}
+.ig div{padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--glass);font-size:12.5px;color:var(--muted);line-height:1.5;min-width:0}
+.ig b{display:block;color:var(--mint);font-size:12px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
+.tabdesc{padding:16px 20px}
+.tabdesc h2{font-size:16px;margin-bottom:4px}
+.tabdesc p{color:var(--muted);font-size:13px;line-height:1.5;max-width:95ch}
+.tabdesc ul{margin:12px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px}
+.tabdesc li{padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--glass);font-size:12px;color:var(--muted);line-height:1.45;min-width:0}
+.tabdesc li b{color:var(--fg);display:block;font-size:12.5px}
+.kpi .b{font-size:11px;color:var(--muted);opacity:.9;margin-top:7px;padding-top:7px;border-top:1px dashed var(--line);line-height:1.4}
+.kgrp{margin:0 4px 10px;color:var(--muted);font-size:12.5px;max-width:95ch;line-height:1.5}
+.xb{display:inline-flex;gap:6px;flex-wrap:wrap}
+.xb .btn{padding:4px 10px;font-size:11.5px;border-radius:9px;gap:5px}
 </style>
 
 <div class="leaves" id="leaves" aria-hidden="true"></div>
@@ -147,11 +165,21 @@ footer{margin-top:34px;color:var(--muted);font-size:12px;text-align:center}
 </div></header>
 
 <main class="wrap">
-  <section class="glass sec rv" style="margin-top:20px">
+  <section class="glass intro rv">
+    <h2>About the RPS Compliance Model</h2>
+    <p>The <b>RPS Compliance Model</b> is a web-based tool that helps electric cooperatives (ECs) and distribution utilities check their position under the DOE <b>Renewable Portfolio Standards (RPS)</b> for on-grid areas. From an EC's recorded data for CP 2020&ndash;2025 it forecasts sales with Holt's linear exponential smoothing, computes the REC obligation each year to 2040, compares it with the RECs the EC can actually secure, and prices any shortfall at the DOE ceiling.</p>
+    <div class="ig">
+      <div><b>What it answers</b>Will our RECs cover the obligation each year? If not, how many RECs are missing, and what could they cost?</div>
+      <div><b>How it computes</b>Obligation = ROUNDDOWN[prior-period GES &times; (K<sub>o</sub> + K<sub>m</sub>)]. Supply = PSA, own generation/net-metering, FIT and banked RECs. 1 REC = 1 MWh.</div>
+      <div><b>Where it is applied</b>Planning REC procurement and REM purchases, budgeting compliance cost, screening new PSAs, and testing REC price levels before the compliance period closes.</div>
+      <div><b>Privacy</b>Uploaded workbooks are read in your browser only. Nothing is sent to a server.</div>
+    </div>
+  </section>
+  <section class="glass sec rv">
     <div class="drop" id="drop">
       <div class="t"><b id="ecName">Upload your Monitoring workbook</b>
         <span id="ecMeta">Drop the filled <i>REC Monitoring Template</i> here. The file is read in your browser only &mdash; nothing is sent to a server.</span></div>
-      <div class="t" style="flex:1 1 100%"><span>Study cases (research basis &mdash; the five ECs of the study):</span>
+      <div class="t" style="flex:1 1 100%"><span style="color:var(--fg);font-weight:600">Study cases: the five ECs of the research. Select one to load its recorded data and see the full analysis.</span>
         <div class="seg" id="studySeg" style="margin-top:6px"></div></div>
       <button class="btn sm" id="btnClear" title="Remove the data saved in this browser">Clear saved data</button>
     </div>
@@ -171,38 +199,74 @@ footer{margin-top:34px;color:var(--muted);font-size:12px;text-align:center}
   <div id="app" hidden>
   <div class="tabs" role="tablist" id="tabs">
     <span class="pill-ind" id="ind"></span>
-    <button class="tab" role="tab" id="t1" aria-selected="true" aria-controls="p1">Executive Dashboard &amp; Navigator</button>
-    <button class="tab" role="tab" id="t2" aria-selected="false" aria-controls="p2">Computation Engine &amp; Export</button>
+    <button class="tab" role="tab" id="t1" aria-selected="true" aria-controls="p1">1 &middot; Compliance &amp; Supply</button>
+    <button class="tab" role="tab" id="t2" aria-selected="false" aria-controls="p2">2 &middot; Financial &amp; Year-by-Year</button>
+    <button class="tab" role="tab" id="t3" aria-selected="false" aria-controls="p3">3 &middot; Computation Engine &amp; Export</button>
   </div>
 
-  <!-- TAB 1 : follows REC_Dashboard of the workbook -->
+  <section class="glass sec rv" id="yearCard">
+    <div class="head"><h3>Select compliance period (year)</h3><span class="chip" id="selChip"></span></div>
+    <input type="range" id="yr" min="2020" max="2040" step="1" value="2025" aria-label="Compliance period year">
+    <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:11px"><span>2020</span><span id="yPeriod"></span><span>2040</span></div>
+    <div class="note">The year is the start of the compliance period (26 Dec of that year); its GES is the base for the next year's obligation. The cards on tabs 1 and 2 show the selected period; the charts always show CP 2020&ndash;2040.</div>
+  </section>
+
+  <!-- TAB 1 : compliance position and supply sources -->
   <div class="pane on" id="p1" role="tabpanel" aria-labelledby="t1">
-    <section class="glass sec rv">
-      <div class="head"><h3>Select compliance period (year)</h3><span class="chip" id="selChip"></span></div>
-      <input type="range" id="yr" min="2020" max="2040" step="1" value="2025" aria-label="Compliance period year">
-      <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:11px"><span>2020</span><span id="yPeriod"></span><span>2040</span></div>
-      <div class="note">The year is the start of the compliance period (26 Dec of that year); its GES is the base for the next year's obligation.</div>
+    <section class="glass tabdesc rv">
+      <h2>Compliance position &amp; supply sources</h2>
+      <p>Shows whether the EC's RECs cover its yearly obligation, and where those RECs come from. A year is <b>compliant</b> when eligible RECs plus the bank brought in cover the obligation; otherwise the gap is the REC shortfall. Years CP 2020&ndash;2025 are recorded data; CP 2026&ndash;2040 are Holt forecasts.</p>
+      <ul>
+        <li><b>Obligation vs eligible RECs and REC bank</b>Compares the yearly obligation with the RECs created and the RECs left in the bank.</li>
+        <li><b>How the obligation is met</b>Breaks the supply into PSA, own generation/net-metering, FIT and bank, and shows the shortfall on top.</li>
+        <li><b>PSA contracted capacity</b>MW contracted per source; only RE-eligible PSAs earn RECs.</li>
+        <li><b>FIT RECs</b>Actual FIT RECs and the Holt forecast for later years.</li>
+      </ul>
     </section>
-    <div class="grid-kpi sec" id="kpis"></div>
-    <div class="note" style="margin:10px 4px 0">A year is COMPLIANT when Total Eligible RECs + the REC bank brought in cover the obligation. Otherwise the gap is the REC shortfall, valued at the DOE ceiling price. Cost figures are an upper-bound planning estimate (no penalties modelled).</div>
 
     <div class="sh rv"><h2>A. Compliance position</h2><span>Does REC supply cover the obligation?</span></div>
+    <div class="kgrp">Cards for the selected compliance period. Status is COMPLIANT when TER + bank covers the obligation.</div>
+    <div class="grid-kpi sec" id="kpisA" style="margin-top:0"></div>
     <div class="row2">
-      <div class="glass rv"><div class="head"><h3>Obligation vs eligible RECs and REC bank</h3></div><div class="chartbox"><canvas id="c1"></canvas></div>
+      <div class="glass rv"><div class="head"><h3>Obligation vs eligible RECs and REC bank</h3><span class="xb" data-chart="c1"></span></div><div class="chartbox"><canvas id="c1"></canvas></div>
         <div class="note">Line = obligation. Teal bars = RECs created in the period (TER); gold bars = RECs left in the bank at year-end.</div></div>
-      <div class="glass rv"><div class="head"><h3>How the obligation is met (RECs)</h3></div><div class="chartbox"><canvas id="c2"></canvas></div>
+      <div class="glass rv"><div class="head"><h3>How the obligation is met (RECs)</h3><span class="xb" data-chart="c2"></span></div><div class="chartbox"><canvas id="c2"></canvas></div>
         <div class="note">Stacked bars show what covers the obligation (PSA, own generation/net-metering, FIT, bank carried in). The red cap is the shortfall.</div></div>
     </div>
 
     <div class="sh rv"><h2>B. Supply sources</h2><span>PSA contracts and FIT RECs</span></div>
+    <div class="kgrp">Where the RECs of the selected period come from.</div>
+    <div class="grid-kpi sec" id="kpisS" style="margin-top:0"></div>
     <div class="row2">
-      <div class="glass rv"><div class="head"><h3>PSA contracted capacity by source (MW)</h3></div><div class="chartbox"><canvas id="c3"></canvas></div>
+      <div class="glass rv"><div class="head"><h3>PSA contracted capacity by source (MW)</h3><span class="xb" data-chart="c3"></span></div><div class="chartbox"><canvas id="c3"></canvas></div>
         <div class="note">Only PSAs with RE-eligible plants (hydro, solar, geothermal, embedded RE, others) earn RECs; grey is conventional supply with no RECs.</div></div>
-      <div class="glass rv"><div class="head"><h3>FIT RECs: actual and forecast</h3></div><div class="chartbox"><canvas id="c4"></canvas></div>
+      <div class="glass rv"><div class="head"><h3>FIT RECs: actual and forecast</h3><span class="xb" data-chart="c4"></span></div><div class="chartbox"><canvas id="c4"></canvas></div>
         <div class="note">Solid bars are actual FIT RECs; lighter bars are Holt's-method forecasts, floored at zero.</div></div>
     </div>
 
+    <section class="glass sec rv" id="advice">
+      <div class="head"><h3>Compliance status &amp; recommendations</h3><span id="badge"></span></div>
+      <div id="adviceSum" style="color:var(--muted)"></div>
+      <ul class="recs" id="recs"></ul>
+    </section>
+  </div>
+
+  <!-- TAB 2 : financial analysis and year-by-year data -->
+  <div class="pane" id="p2" role="tabpanel" aria-labelledby="t2">
+    <section class="glass tabdesc rv">
+      <h2>Financial analysis &amp; year-by-year data</h2>
+      <p>Values every REC shortfall at the DOE ceiling price (or any price you set) and lists the numbers behind every chart. Costs are an upper-bound planning estimate: shortfall &times; price, with no penalties or price escalation.</p>
+      <ul>
+        <li><b>Annual cost of REC shortfall</b>Bars = cost per year (&#8369; million); line = cost spread over kWh sold.</li>
+        <li><b>Cumulative cost and price sensitivity</b>Running total at the price set, with 75% and 50% of that price.</li>
+        <li><b>Cost summary &amp; price sensitivity tables</b>Cost by compliance period and at 50%, 75% and 100% of the price.</li>
+        <li><b>Year-by-year data</b>Every figure for CP 2020&ndash;2040, actual and forecast, exportable to CSV.</li>
+      </ul>
+    </section>
+
     <div class="sh rv"><h2>C. Financial analysis</h2><span>Estimated cost of REC shortfall at the DOE ceiling price</span></div>
+    <div class="kgrp">Cost cards for the selected compliance period, at the price set below.</div>
+    <div class="grid-kpi sec" id="kpisF" style="margin-top:0"></div>
     <section class="glass rv">
       <div class="fgrid" style="grid-template-columns:minmax(220px,2fr) minmax(130px,1fr) auto;align-items:end">
         <label class="field">DOE maximum REC price: <b id="pv" style="color:var(--fg)"></b>
@@ -213,32 +277,30 @@ footer{margin-top:34px;color:var(--muted);font-size:12px;text-align:center}
       <div class="note">Move the price to test any REM price level. No annual escalation is applied. The sensitivity table and the cumulative-cost chart show 50%, 75% and 100% of the price set here.</div>
     </section>
     <div class="row2" style="margin-top:14px">
-      <div class="glass rv"><div class="head"><h3>Annual cost of REC shortfall</h3></div><div class="chartbox"><canvas id="c5"></canvas></div>
+      <div class="glass rv"><div class="head"><h3>Annual cost of REC shortfall</h3><span class="xb" data-chart="c5"></span></div><div class="chartbox"><canvas id="c5"></canvas></div>
         <div class="note">Bars = shortfall &times; price (left axis, &#8369; million); line = cost spread over kWh sold (right axis). Years without a shortfall show no bar.</div></div>
-      <div class="glass rv"><div class="head"><h3>Cumulative cost and price sensitivity</h3></div><div class="chartbox"><canvas id="c6"></canvas></div>
+      <div class="glass rv"><div class="head"><h3>Cumulative cost and price sensitivity</h3><span class="xb" data-chart="c6"></span></div><div class="chartbox"><canvas id="c6"></canvas></div>
         <div class="note">The solid line is the running total at the price above; dashed lines show 75% and 50% of that price.</div></div>
     </div>
     <div class="row2" style="margin-top:14px">
-      <div class="glass rv"><div class="head"><h3>Cost summary by period</h3></div><div class="tw"><table class="tbl" id="tCost"></table></div></div>
-      <div class="glass rv"><div class="head"><h3>Price sensitivity (REM price level)</h3></div><div class="tw"><table class="tbl" id="tSens"></table></div></div>
+      <div class="glass rv"><div class="head"><h3>Cost summary by period</h3><span class="xb" data-table="tCost"></span></div><div class="tw"><table class="tbl" id="tCost"></table></div></div>
+      <div class="glass rv"><div class="head"><h3>Price sensitivity (REM price level)</h3><span class="xb" data-table="tSens"></span></div><div class="tw"><table class="tbl" id="tSens"></table></div></div>
     </div>
 
-    <div class="sh rv"><h2>D. Year-by-year data</h2><span>Source of every chart on this page</span></div>
+    <div class="sh rv"><h2>D. Year-by-year data</h2><span>Source of every chart on tabs 1 and 2</span></div>
     <section class="glass rv">
       <div class="head"><h3>Actual = CP 2020&ndash;2025 (recorded) &middot; Forecast = CP 2026&ndash;2040 (Holt's method)</h3><button class="btn sm" id="xCsv">Export CSV</button></div>
       <div class="note" style="margin:0 0 10px">1 REC = 1 MWh. Red = year with a REC shortfall.</div>
       <div class="tw" style="max-height:560px"><table class="tbl" id="tYear"></table></div>
     </section>
-
-    <section class="glass sec rv" id="advice">
-      <div class="head"><h3>Compliance status &amp; recommendations</h3><span id="badge"></span></div>
-      <div id="adviceSum" style="color:var(--muted)"></div>
-      <ul class="recs" id="recs"></ul>
-    </section>
   </div>
 
-  <!-- TAB 2 : computation sheets of the workbook -->
-  <div class="pane" id="p2" role="tabpanel" aria-labelledby="t2">
+  <!-- TAB 3 : computation sheets of the workbook -->
+  <div class="pane" id="p3" role="tabpanel" aria-labelledby="t3">
+    <section class="glass tabdesc rv">
+      <h2>Computation engine &amp; export</h2>
+      <p>The same sheets as the study workbook, recalculated in your browser. Change a gold input (smoothing constants, price, opening bank, forecast PSA) and every sheet, chart and card updates. Use <b>Export workbook</b> to take the full model to Excel.</p>
+    </section>
     <section class="glass sec rv">
       <div class="head"><h3>Model parameters</h3><button class="btn sm" id="setReset">Reset to defaults</button></div>
       <div class="fgrid" id="params"></div>
@@ -253,8 +315,8 @@ footer{margin-top:34px;color:var(--muted);font-size:12px;text-align:center}
         <label class="field" style="flex:1 1 220px">Search rows<input id="q" class="inp" placeholder="Year, label or value&hellip;"></label>
         <button class="btn sm" id="fmBtn" aria-pressed="false">Show formulas</button>
       </div>
-      <div id="shChartWrap" class="glass" style="padding:12px;margin-bottom:12px" hidden><div class="chartbox" style="height:280px"><canvas id="cSheet"></canvas></div></div>
-      <div class="tw" style="max-height:640px"><table class="shtbl" id="shTbl"></table></div>
+      <div id="shChartWrap" class="glass" style="padding:12px;margin-bottom:12px" hidden><div class="head"><h3 id="shChartT">Sheet chart</h3><span class="xb" data-chart="cSheet"></span></div><div class="chartbox" style="height:280px"><canvas id="cSheet"></canvas></div></div>
+      <div class="head"><h3>Sheet table</h3><span class="xb" data-table="shTbl"></span></div><div class="tw" style="max-height:640px"><table class="shtbl" id="shTbl"></table></div>
       <div class="note" id="shNote"></div>
     </section>
   </div>
@@ -718,6 +780,44 @@ function exportCsv(){
   saveFile('RPS_YearByYear_'+fname()+'.csv',csv,'text/csv');
 }
 
+
+/* ---------- per-graph / per-table export ---------- */
+const slug=t=>t.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,48);
+const csvQ=v=>{if(v==null)return '';if(typeof v==='number')return String(Math.round(v*1e6)/1e6);return '"'+String(v).replace(/"/g,'""')+'"';};
+function titleOf(el){const g=el.closest('.glass');const h=g&&g.querySelector('h3');return h?h.textContent.trim():'chart';}
+function chartCsv(id){
+  const ch=charts[id];if(!ch)return toast('Nothing to export yet.');
+  const ds=ch.data.datasets,L=ch.data.labels;
+  const rows=[['Compliance period'].concat(ds.map(d=>d.label))].concat(L.map((l,i)=>[l].concat(ds.map(d=>d.data[i]==null?'':d.data[i]))));
+  saveFile('RPS_'+slug(titleOf($('#'+id)))+'_'+fname()+'.csv','\ufeff'+rows.map(r=>r.map(csvQ).join(',')).join('\r\n'),'text/csv');
+}
+async function chartPng(id){
+  const ch=charts[id];if(!ch)return toast('Nothing to export yet.');
+  const src=ch.canvas,w=src.width,h=src.height,k=w/Math.max(1,src.clientWidth);
+  const top=Math.round(58*k),bot=Math.round(28*k),c=document.createElement('canvas');c.width=w;c.height=h+top+bot;
+  const x=c.getContext('2d');x.fillStyle=css('--bg');x.fillRect(0,0,c.width,c.height);
+  x.textBaseline='alphabetic';x.fillStyle=css('--fg');x.font='700 '+Math.round(17*k)+'px Inter,Arial,sans-serif';x.fillText(titleOf(src),16*k,28*k);
+  x.fillStyle=css('--muted');x.font=Math.round(12*k)+'px Inter,Arial,sans-serif';x.fillText((S.ec?S.ec.name:'')+' · CP 2020–2040 · actual to 2025, Holt forecast after',16*k,48*k);
+  x.drawImage(src,0,top);
+  x.fillText('RPS Compliance Model · 1 REC = 1 MWh · planning estimate',16*k,top+h+19*k);
+  const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+  saveFile('RPS_'+slug(titleOf(src))+'_'+fname()+'.png',new Uint8Array(await blob.arrayBuffer()),'image/png');
+}
+function tableCsv(id){
+  const t=$('#'+id);if(!t||!t.rows.length)return toast('Nothing to export yet.');
+  const num=/^\(?-?[\d,]+(\.\d+)?\)?$/;
+  const rows=[...t.rows].map(r=>[...r.cells].map(c=>{const x=c.textContent.trim();return num.test(x)&&x.indexOf('(')<0?x.replace(/,/g,''):x;}));
+  saveFile('RPS_'+slug(titleOf(t))+'_'+fname()+'.csv','\ufeff'+rows.map(r=>r.map(v=>/^-?\d+(\.\d+)?$/.test(v)?v:csvQ(v)).join(',')).join('\r\n'),'text/csv');
+}
+function initExports(){
+  $$('.xb').forEach(b=>{
+    if(b.dataset.chart){b.innerHTML='<button class="btn sm" data-png="'+b.dataset.chart+'" title="Save this graph as an image">Export PNG</button><button class="btn sm" data-ccsv="'+b.dataset.chart+'" title="Save the numbers plotted in this graph">Export data (CSV)</button>';}
+    else if(b.dataset.table){b.innerHTML='<button class="btn sm" data-tcsv="'+b.dataset.table+'" title="Save this table">Export CSV</button>';}
+  });
+  document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
+    if(t.dataset.png)chartPng(t.dataset.png);else if(t.dataset.ccsv)chartCsv(t.dataset.ccsv);else if(t.dataset.tcsv)tableCsv(t.dataset.tcsv);});
+}
+
 /* ---------- theme / charts ---------- */
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const charts={};
@@ -773,27 +873,33 @@ const pillS=s=>s==='Deficit'?'<span class="pillb bad">Deficit</span>':'<span cla
 const pillB=b=>b==='Actual'?'<span class="pillb act">Actual</span>':'<span class="pillb pr">Forecast</span>';
 function renderKpis(){
   const g=a=>V('REC_Dashboard',a),gn=a=>VN('REC_Dashboard',a);
-  const st=g('M8');
-  const surplus=gn('O11');
-  const K=[
-   ['GES (MWh)',n0(gn('A8')),'N−1 base for the next year',''],
-   ['REC obligation',n0(gn('C8')),'RECs',''],
-   ['Total eligible RECs (TER)',n0(gn('E8')),'RECs created + carry-over',''],
-   ['Ending REC bank',n0(gn('G8')),'RECs at year-end',''],
-   ['REC shortfall',n0(gn('I8')),'RECs',gn('I8')>0?'neg':''],
-   ['Obligation met',pc(gn('K8'),1),'of the obligation',''],
-   ['Status',st,'compliance status',st==='Deficit'?'neg':'pos'],
-   ['Basis',g('O8'),'recorded or Holt forecast',''],
-   ['PSA contracted (MW)',n2(gn('A11')),'all sources',''],
-   ['FIT RECs',n0(gn('C11')),'RECs',''],
-   ['REM RECs purchased',n0(gn('E11')),'RECs',''],
-   ['RECs sold',n0(gn('G11')),'RECs',''],
-   ['Est. cost of shortfall (₱)',n0(gn('I11')),'at the DOE ceiling price','gold'],
-   ['Cumulative cost (₱)',n0(gn('K11')),'since CP 2020','gold'],
-   ['Cost per kWh sold (₱)',gn('M11').toFixed(4),'PHP / kWh','gold'],
-   ['Surplus / (deficit) vs obligation',(surplus<0?'(':'')+n0(Math.abs(surplus))+(surplus<0?')':''),'TER + bank − obligation',surplus<0?'neg':'pos']];
-  $('#kpis').innerHTML=K.map(k=>'<div class="glass kpi'+(k[3]==='gold'?' gold':'')+'"><div class="l">'+(k[0]==='Status'?'<span class="dot '+(st==='Deficit'?'bad':'')+'"></span>':'')+k[0]+'</div><div class="v '+(k[3]==='gold'?'':k[3])+'">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>').join('');
-  $('#selChip').innerHTML='CP '+S.year+' &middot; '+g('O8')+' &middot; Dec 26, '+S.year+' – Dec 25, '+(S.year+1);
+  const st=g('M8'),surplus=gn('O11'),basis=g('O8');
+  const bTxt=basis==='Actual'?'Recorded data':'Holt forecast';
+  // [label, value, what it reflects, based on, tone, gold]
+  const A=[
+   ['Gross Electricity Sales (GES)',n0(gn('A8'))+' MWh','All energy sold in this period','ES + net-metering + RE own use + GEOP. Becomes the N−1 base of next year\'s obligation.',''],
+   ['REC obligation',n0(gn('C8'))+' RECs','RECs the EC must hold this year','ROUNDDOWN[ prior-period GES × (Ko + Km) ]',''],
+   ['Total eligible RECs (TER)',n0(gn('E8'))+' RECs','RECs available to meet the obligation','PSA RECs + GEOP/net-metering/own use + FIT + carry-over, rounded down',''],
+   ['Ending REC bank',n0(gn('G8'))+' RECs','Surplus RECs carried to next year','Eligible RECs left after the obligation is met',''],
+   ['Surplus / (deficit)',(surplus<0?'(':'')+n0(Math.abs(surplus))+(surplus<0?')':'')+' RECs','Positive = covered; in brackets = gap','TER + bank − obligation',surplus<0?'neg':'pos'],
+   ['REC shortfall',n0(gn('I8'))+' RECs','RECs still missing after all supply','MAX(0, obligation − TER − bank)',gn('I8')>0?'neg':''],
+   ['Obligation met',pc(gn('K8'),1),'Share of the obligation covered','(TER + bank) ÷ obligation',''],
+   ['Compliance status',st,bTxt+' · '+(st==='Deficit'?'obligation not fully covered':'obligation covered'),'COMPLIANT when TER + bank ≥ obligation',st==='Deficit'?'neg':'pos']];
+  const B=[
+   ['PSA contracted capacity',n2(gn('A11'))+' MW','All Power Supply Agreements, RE and non-RE','Sum of contracted MW per source (chart B)',''],
+   ['FIT RECs',n0(gn('C11'))+' RECs','RECs from Feed-in-Tariff plants','Recorded FIT RECs, or Holt forecast for later years',''],
+   ['REM RECs purchased',n0(gn('E11'))+' RECs','RECs bought on the REC Market','Recorded REM purchases in the Monitoring sheet',''],
+   ['RECs sold',n0(gn('G11'))+' RECs','RECs the EC sold or surrendered to others','Recorded RECs sold in the Monitoring sheet','']];
+  const F=[
+   ['REC shortfall',n0(gn('I8'))+' RECs','Volume that has to be bought or paid for','MAX(0, obligation − TER − bank)',gn('I8')>0?'neg':''],
+   ['Estimated cost of shortfall','₱ '+n0(gn('I11')),'Cost in this period if bought at the price below','Shortfall × REC price (upper bound, no penalties)','','gold'],
+   ['Cumulative cost','₱ '+n0(gn('K11')),'Running total from CP 2020 to this period','Sum of the yearly shortfall costs','','gold'],
+   ['Cost per kWh sold','₱ '+gn('M11').toFixed(4)+' / kWh','Cost spread over all energy sold','Cost of shortfall ÷ kWh sold','','gold']];
+  const card=k=>'<div class="glass kpi'+(k[5]==='gold'?' gold':'')+'" title="'+esc(k[0]+': '+k[2]+'. Based on: '+k[3])+'"><div class="l">'+(k[0]==='Compliance status'?'<span class="dot '+(st==='Deficit'?'bad':'')+'"></span>':'')+esc(k[0])+'</div><div class="v '+(k[5]==='gold'?'':k[4])+'">'+esc(String(k[1]))+'</div><div class="s">'+esc(k[2])+'</div><div class="b"><b>Based on:</b> '+esc(k[3])+'</div></div>';
+  $('#kpisA').innerHTML=A.map(card).join('');
+  $('#kpisS').innerHTML=B.map(card).join('');
+  $('#kpisF').innerHTML=F.map(card).join('');
+  $('#selChip').innerHTML='CP '+S.year+' &middot; '+basis+' &middot; Dec 26, '+S.year+' – Dec 25, '+(S.year+1);
   $('#yPeriod').textContent='CP '+S.year;
 }
 function renderTables(Y){
@@ -887,7 +993,7 @@ function drawSheetChart(name){
     const o=base();o.plugins.title={display:true,text:'Estimated annual and cumulative cost of the REC shortfall (₱ million)',color:css('--fg')};o.plugins.tooltip.callbacks.label=c=>' '+c.dataset.label+': ₱'+c.parsed.y.toFixed(2)+' M';
     cfg={data:{labels:lab,datasets:[{type:'bar',label:'Annual cost',data:colVals(name,'F',14,34).map(v=>v/1e6),backgroundColor:css('--bad'),borderRadius:4},{type:'line',label:'Cumulative cost',data:colVals(name,'G',14,34).map(v=>v/1e6),borderColor:css('--warn'),backgroundColor:css('--warn'),pointRadius:2,tension:.2}]},options:o};
   }
-  wrap.hidden=!cfg;if(cfg)mk('cSheet',cfg);
+  wrap.hidden=!cfg;if(cfg){mk('cSheet',cfg);$('#shChartT').textContent=cfg.options.plugins.title.text;}
 }
 function renderParams(){
   const st=S.set,ec=S.ec,psa=st.psa||ec.psa;
@@ -929,8 +1035,9 @@ function init(){
   const watch=()=>$$('.rv:not(.in)').forEach(el=>io?io.observe(el):el.classList.add('in'));watch();
   new MutationObserver(watch).observe(document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
   setTimeout(()=>$$('.rv').forEach(el=>el.classList.add('in')),2500);
+  initExports();
   // tabs
-  $$('.tab').forEach(t=>t.onclick=()=>{$$('.tab').forEach(x=>x.setAttribute('aria-selected',x===t));$$('.pane').forEach(p=>p.classList.toggle('on',p.id===t.getAttribute('aria-controls')));S.page=t.getAttribute('aria-controls');positionInd();if(S.ec){if(S.page==='p2')renderSheet();else refresh();}});
+  $$('.tab').forEach(t=>t.onclick=()=>{$$('.tab').forEach(x=>x.setAttribute('aria-selected',x===t));$$('.pane').forEach(p=>p.classList.toggle('on',p.id===t.getAttribute('aria-controls')));S.page=t.getAttribute('aria-controls');$('#yearCard').hidden=S.page==='p3';positionInd();if(S.ec){if(S.page==='p3')renderSheet();else refresh();}window.scrollTo({top:0,behavior:'smooth'});});
   window.addEventListener('resize',positionInd);
   // theme
   $('#btnTheme').onclick=()=>{const d=document.documentElement,cur=d.dataset.theme||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');d.dataset.theme=cur==='dark'?'light':'dark';try{localStorage.setItem('rpscm.theme',d.dataset.theme);}catch(e){}if(S.ec)setTimeout(refresh,60);};
